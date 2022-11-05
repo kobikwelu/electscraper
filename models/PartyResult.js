@@ -9,13 +9,8 @@ const partyResultSchema = new mongoose.Schema({
     description: String,
     pollingUnitCode: String,
     logo: String,
-    votes: Number,
+    vote: Number,
     isAgentEndorsed: Boolean,
-    electionDate: Date,
-    resultSheetStateCode: Number,
-    resultSheetLGACode: Number,
-    resultSheetRegistrationArea: Number,
-    resultSheetPollingUnitCode: Number,
     transactionTimeStamp:  { type: Date, default: Date.now }
 });
 

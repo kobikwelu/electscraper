@@ -1,11 +1,13 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const useragent = require("express-useragent");
-const logger = require("morgan");
+global.logger ??= require('pino')();
 const RateLimit = require("express-rate-limit");
 const device = require("express-device");
 const config = require("./config");
+
 const db = require("./dbConnect");
+const redis = require("./redis");
 const cron = require("node-cron");
 //const authApi = require('./services/auth0api');
 //const { checkDistricts } = require('./services/civicApi');
@@ -20,7 +22,7 @@ const app = express();
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.use(device.capture());
-app.use(logger("combined"));
+//app.use(logger("combined"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(useragent.express());
@@ -67,38 +69,45 @@ app.use((req, res, next) => {
 // Start the server
 app.set("port", process.env.PORT || 4252);
 
-const server = app.listen(app.get("port"), () => {
-    console.log(
+const server = app.listen(app.get("port"), async () => {
+    logger.info(
         "###########################################################################################"
     );
-    console.log(
+    logger.info(
         "###########################################################################################"
     );
-    console.log("*************************************************");
-    console.log("Setting up server server initialization process..");
-    console.log("*************************************************");
-    console.log(`Express server listening on port ${server.address().port}`);
-    console.log("*************************************************");
-    console.log("*************************************************");
-    console.log(`This is a  ${process.env.NODE_ENV} server`);
-    console.log("*************************************************");
-    console.log("notification service");
-    console.log("*************************************************");
-    console.log("*************************************************");
-    console.log("Property of Kenneth Obikwelu");
-    console.log("*************************************************");
-    console.log("Attempting to connect to db .........");
+    logger.info("*************************************************");
+    logger.info("Setting up server server initialization process..");
+    logger.info("*************************************************");
+    logger.info(`Express server listening on port ${server.address().port}`);
+    logger.info("*************************************************");
+    logger.info("*************************************************");
+    logger.info(`This is a  ${process.env.NODE_ENV} server`);
+    logger.info("*************************************************");
+    logger.info("*************************************************");
+    logger.info("*************************************************");
+    logger.info("Property of Kenneth Obikwelu");
+    logger.info("*************************************************");
+    logger.info("Attempting to connect to db .........");
     db.connect();
+    logger.info("Attempting to connect to redis cache .........");
+    global.redisClient = await redis.createClient()
+    logger.info(
+        "###########################################################################################"
+    );
+    logger.info(
+        "###########################################################################################"
+    );
 });
 
 /*
 cron.schedule(`${config.cronTime}`, async () => {
-    console.log("running cron job");
+    logger.info("running cron job");
     try {
         await newslettersController.getDailyNewsUpdates();
         await twitterController.broadcast()
     } catch (ex) {
-        console.log(ex);
+        logger.info(ex);
     }
 });
 */
