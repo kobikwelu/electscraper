@@ -15,7 +15,7 @@ const  electionCache   = require('../../../middlewares/electionCache')
 
 router.get('/', [electionCache.getCachedElectionData], electionResultController.getElectionResult);
 
-router.post('/',   electionResultController.insertElectionResult);
+router.post('/',   [electionCache.preInsertCacheCheck], electionResultController.insertElectionResult);
 
 router.patch('/', electionResultController.updateElectionResult);
 

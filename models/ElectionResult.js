@@ -29,7 +29,7 @@ const electionResultSchema = new mongoose.Schema({
             {
                 partyId:{
                     type:mongoose.Schema.Types.ObjectId,
-                    ref: 'Party',
+                    ref: 'PartyResult',
                     required: false
                 }
             }
