@@ -1,3 +1,6 @@
 .idea
 /.idea
+/.pnp.cjs
+/.yarn
 /.env
+/package-lock.json
