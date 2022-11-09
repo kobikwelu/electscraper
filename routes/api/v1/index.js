@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const electionResultRouter = require('./electionResult');
+const votingResultPerPURouter = require('./votingResultPerPU');
+const votingResultPerGEORouter = require('./votingResultPerGEO');
 
 
 /**
@@ -12,6 +14,8 @@ const electionResultRouter = require('./electionResult');
  */
 
 router.use('/electionResult', electionResultRouter);
+router.use('/votingResultPerPU', votingResultPerPURouter);
+router.use('/votingResultPerGEO', votingResultPerGEORouter);
 
 
 module.exports = router;

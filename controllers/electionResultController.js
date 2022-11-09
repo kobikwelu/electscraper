@@ -231,11 +231,3 @@ exports.updateElectionResult = async (req, res) => {
         })
     }
 };
-
-
-const buildParty_votes_array = async (party_array_Object)=>{
-    let party_votes=[]
-    await Promise.all(party_array_Object.map(async (party_object) => {
-        party_object
-    }))
-}
