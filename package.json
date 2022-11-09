@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "app.js",
   "license": "MIT",
+  "engines": {
+    "yarn": "3.x"
+  },
   "dependencies": {
     "async": "^3.2.0",
     "aws-sdk": "^2.656.0",
@@ -47,10 +50,7 @@
     "twitter-lite": "^1.1.0",
     "url": "^0.11.0",
     "url-parse": "^1.4.7",
-    "uuid": "^7.0.3",
-    "engines": {
-      "yarn": "3.x"
-    }
+    "uuid": "^7.0.3"
   },
   "scripts": {
     "start": "node app.js | pino-pretty --ignore uploads/",
