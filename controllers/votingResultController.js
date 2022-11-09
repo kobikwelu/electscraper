@@ -55,7 +55,8 @@ exports.getVotingResultPerPU = async (req, res) => {
 exports.getVotingResultPerGEO = async (req, res) => {
     const {pollingUnit_Codes, election_name} = req.body
 
-
+//TODO: Convert geo from frontend and route it to a LGA
+    //TODO: GET ALL VOTES FROM PU in that LGA and display
     if (pollingUnit_Codes && election_name) {
         try {
 

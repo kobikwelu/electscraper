@@ -51,7 +51,7 @@
     "yarn": "^1.22.19"
   },
   "scripts": {
-    "start": "nodemon app.js | pino-pretty --ignore uploads/",
+    "start": "node app.js | pino-pretty --ignore uploads/",
     "test": "./node_modules/.bin/mocha --recursive --exit"
   },
   "devDependencies": {
