@@ -4,7 +4,7 @@
   "main": "app.js",
   "license": "MIT",
   "engines": {
-    "yarn": "3.x"
+    "yarn": "3.0.0"
   },
   "dependencies": {
     "async": "^3.2.0",
