@@ -22,7 +22,7 @@ exports.createClient = async () => {
             redisClient = await redis.createClient({
                 url: getConnectionString(),
                 socket: {
-                    tls: true,
+                    tls: false,
                     rejectUnauthorized: false
                 }
             });
@@ -42,7 +42,7 @@ exports.createClient = async () => {
         await redisClient.connect()
         logger.info('***** Connected to redis client .....')
         if (redisClient) {
-            logger.info('***** connection verified .....')
+            logger.info('***** REDIS connection verified .....')
             state.connected = true;
         }
 
@@ -57,7 +57,7 @@ exports.createClient = async () => {
         });
         return redisClient
     } catch (error) {
-        logger.error(`Error : ${error}`)
+        logger.error(`REDIS Error : ${error}`)
     }
 }
 
