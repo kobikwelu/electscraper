@@ -18,8 +18,9 @@ exports.createClient = async () => {
             return;
         }
         if (config.redis.connectionString) {
+            logger.info(`connection string ${getConnectionString()}`)
             redisClient = await redis.createClient({
-                url: getConnectionString,
+                url: getConnectionString(),
                 socket: {
                     tls: true,
                     rejectUnauthorized: false
