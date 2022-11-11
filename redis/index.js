@@ -26,14 +26,12 @@ exports.createClient = async () => {
             redisClient = await redis.createClient({});
             logger.info('***** LOCAL REDIS client created .....')
 
+            redisClient.on("error", (error) => {
+                logger.error('***** Not connected to REDIS .....')
+                logger.error(`Error : ${error}`)
+            });
         }
-
-        redisClient.on("error", (error) => {
-            logger.error('***** Not connected to REDIS .....')
-            logger.error(`Error : ${error}`)
-        });
-
-
+        
         await redisClient.connect()
         logger.info('***** Connected to redis client .....')
         if (redisClient) {
