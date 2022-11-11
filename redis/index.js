@@ -23,7 +23,12 @@ exports.createClient = async () => {
                 url: getConnectionString(),
                 socket: {
                     tls: false,
-                    rejectUnauthorized: false
+                    rejectUnauthorized: false,
+                    keepAlive: 10000,
+                    connectTimeoutMS: 50000,
+                    reconnectStrategy: (retries=>{
+                        Math.min(retries * 50, 500)
+                    })
                 }
             });
             logger.info('***** REMOTE REDIS client created .....')
