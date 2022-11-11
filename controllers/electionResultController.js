@@ -233,6 +233,11 @@ exports.updateElectionResult = async (req, res) => {
                 res.json({
                     id: eEIR._id
                 })
+            } else {
+                res.status(200);
+                res.json({
+                   message: `unique instance of Polling unit ${pollingUnit_Code} and election name ${election_name} not found`
+                })
             }
         } catch (error) {
             logger.error(error)
