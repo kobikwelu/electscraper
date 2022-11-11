@@ -1,4 +1,5 @@
 const redis = require("redis");
+const config = require('../config');
 
 const state = {
     connected: false
@@ -6,13 +7,22 @@ const state = {
 
 let redisClient;
 
+const getConnectionString = () => {
+    return config.redis.connectionString;
+};
+
 
 exports.createClient = async () => {
     if (state.connected) {
         return;
     }
-    redisClient = await redis.createClient({});
-    logger.info('***** client created .....')
+    if (config.redis.connectionString) {
+        redisClient = await redis.createClient({getConnectionString});
+        logger.info('***** REMOTE REDIS client created .....')
+    } else {
+        redisClient = await redis.createClient({});
+        logger.info('***** LOCAL REDIS client created .....')
+    }
 
     redisClient.on("error", (error) => {
         logger.error('***** Not connected to REDIS .....')

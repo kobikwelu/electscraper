@@ -19,6 +19,9 @@ const config = {
       connectTimeoutMS: 30000,
     },
   },
+  redis: {
+    connectionString: process.env.REDIS_URL
+  },
   key: {
     private: process.env.TOKEN_PRIVATE_KEY,
     public: process.env.TOKEN_PUBLIC_KEY,
