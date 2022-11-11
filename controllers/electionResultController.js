@@ -10,30 +10,39 @@ exports.getElectionResult = async (req, res) => {
 
     if (pollingUnit_State && pollingUnit_LGA && pollingUnit_name &&
         pollingUnit_Code && election_name) {
+        let electionResult
         try {
-            let electionResult = await ElectionResult.findOne({
+             electionResult = await ElectionResult.findOne({
                 pollingUnit_State, pollingUnit_LGA, pollingUnit_name,
                 pollingUnit_Code, election_name
             })
 
-            logger.info('item is not in the cache this time, so writing to cache')
+            if (electionResult){
+                logger.info('item is not in the cache this time, so writing to cache')
 
-            await redisClient.set(pollingUnit_Code, JSON.stringify(electionResult), {
-                ex: 120,
-                NX: true
-            })
+                await redisClient.set(pollingUnit_Code, JSON.stringify(electionResult), {
+                    ex: 120,
+                    NX: true
+                })
 
-            logger.info(`found and result ${electionResult._id}`)
-            res.status(200);
-            res.json({
-                result: electionResult
-            })
-        } catch (error) {
-            logger.error(error)
-            if (error.message === 'Cannot read property \'_id\' of null') {
+                logger.info(`found and result ${electionResult._id}`)
                 res.status(200);
                 res.json({
-                    result: 'Item was not found and was not saved to cache'
+                    result: electionResult
+                })
+            } else {
+                res.status(200);
+                res.json({
+                    result: []
+                })
+            }
+        } catch (error) {
+            logger.error(error)
+            if (error.message.includes( 'Cannot read property')) {
+                logger.warn('caching process failed')
+                res.status(200);
+                res.json({
+                    result: electionResult
                 })
             } else {
                 res.status(500);
