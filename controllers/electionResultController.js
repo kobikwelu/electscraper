@@ -52,6 +52,7 @@ exports.getElectionResult = async (req, res) => {
 };
 
 exports.insertElectionResult = async (req, res) => {
+    let eocR
     const {
         pollingUnit_Country, pollingUnit_State, pollingUnit_LGA, pollingUnit_name,
         pollingUnit_Code, election_name, meta
@@ -96,7 +97,7 @@ exports.insertElectionResult = async (req, res) => {
                         party_Votes: []
                     }
                 })
-                let eocR = await electionResult.save();
+                 eocR = await electionResult.save();
                 logger.info('committing item to datastore')
                 logger.info('writing item to cache')
                 await redisClient.set(pollingUnit_Code, JSON.stringify(eocR), {
@@ -111,10 +112,18 @@ exports.insertElectionResult = async (req, res) => {
             }
         } catch (error) {
             logger.error(error)
-            res.status(500);
-            res.json({
-                message: "something went wrong"
-            })
+            if (error.message.includes('Cannot read properties of undefined')) {
+                logger.warn('item was not saved to cache')
+                res.status(200);
+                res.json({
+                    id: eocR._id
+                })
+            } else {
+                res.status(500);
+                res.json({
+                    message: "something went wrong"
+                })
+            }
         }
     } else {
         res.status(400);
