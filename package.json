@@ -56,7 +56,8 @@
     "yarn": "^1.22.19"
   },
   "scripts": {
-    "start": "node app.js | pino-pretty --ignore uploads/",
+    "start1": "node app.js | pino-pretty --ignore uploads/",
+    "start": "pm2-runtime start ecosystem.config.js --env production",
     "test": "./node_modules/.bin/mocha --recursive --exit"
   },
   "devDependencies": {
