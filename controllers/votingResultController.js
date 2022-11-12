@@ -18,26 +18,22 @@ exports.getVotingResultPerPU = async (req, res) => {
                 let activeElectionResult = await ElectionResult.findOne({
                     pollingUnit_Code, election_name
                 })
-                logger.info('election Instance found')
-                let rawVotesIds = activeElectionResult.meta.party_Votes
-                logger.info('building votes results')
-                await Promise.all(rawVotesIds.map(async (voteId) => {
-                    let activeVote = await PartyResult.findOne({
-                       _id: voteId
-                    })
-                    electionPayload.votes.push(activeVote)
-                }))
+                if (activeElectionResult){
+                    let rawVotesIds = activeElectionResult.meta.party_Votes
+                    await Promise.all(rawVotesIds.map(async (voteId) => {
+                        let activeVote = await PartyResult.findOne({
+                            _id: voteId
+                        })
+                        electionPayload.votes.push(activeVote)
+                    }))
+                }
             }))
-            logger.info('building votes results')
             res.status(200);
             res.json({
                 electionPayload
             })
-
-
         } catch (error) {
             logger.error(error)
-
                 res.status(500);
                 res.json({
                     message: "something went wrong"
