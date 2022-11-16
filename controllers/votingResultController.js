@@ -7,27 +7,10 @@ const PartyResult = require("../models/PartyResult");
 exports.getVotingResultPerPU = async (req, res) => {
     const {pollingUnit_Codes, election_name} = req.body
 
-    let electionPayload = {
-        election_name: election_name,
-        votes: []
-    }
 
     if (pollingUnit_Codes && election_name) {
         try {
-            await Promise.all(pollingUnit_Codes.map(async (pollingUnit_Code) => {
-                let activeElectionResult = await ElectionResult.findOne({
-                    pollingUnit_Code, election_name
-                })
-                if (activeElectionResult){
-                    let rawVotesIds = activeElectionResult.meta.party_Votes
-                    await Promise.all(rawVotesIds.map(async (voteId) => {
-                        let activeVote = await PartyResult.findOne({
-                            _id: voteId
-                        })
-                        electionPayload.votes.push(activeVote)
-                    }))
-                }
-            }))
+           let electionPayload  = await findResultPerPUinBatch(pollingUnit_Codes, election_name)
             res.status(200);
             res.json({
                 electionPayload
@@ -57,6 +40,7 @@ exports.getVotingResultPerGEO = async (req, res) => {
         try {
 
 
+
         } catch (error) {
             logger.error(error)
 
@@ -73,3 +57,52 @@ exports.getVotingResultPerGEO = async (req, res) => {
     }
 
 };
+
+const getTotalVotesInLGA = async (localGov, electionName) =>{
+
+}
+
+const getTotalVotesInWard = async (localGov, electionName) =>{
+
+}
+
+/**
+ *
+ * @param pollingUnit_Codes
+ * @param election_name
+ * @returns {Promise<{election_name, votes: *[]}>}
+ */
+const findResultPerPUinBatch = async (pollingUnit_Codes, election_name) =>{
+    let electionPayload = {
+        election_name: election_name,
+        votes: []
+    }
+
+    await Promise.all(pollingUnit_Codes.map(async (pollingUnit_Code) => {
+        let activeElectionResult = await ElectionResult.findOne({
+            pollingUnit_Code, election_name
+        })
+        if (activeElectionResult){
+            let rawVotesIds = activeElectionResult.meta.party_Votes
+            await Promise.all(rawVotesIds.map(async (voteId) => {
+                let activeVote = await PartyResult.findOne({
+                    _id: voteId
+                })
+                electionPayload.votes.push(activeVote)
+            }))
+        }
+    }))
+    return electionPayload
+}
+
+const findPUsInWard = async ()=>{
+
+}
+
+const findWardsInLGA = async ()=>{
+
+}
+
+const findLGAsInState = async ()=>{
+
+}

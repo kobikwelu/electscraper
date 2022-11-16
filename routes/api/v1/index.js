@@ -4,7 +4,7 @@ const router = express.Router();
 const electionResultRouter = require('./electionResult');
 const votingResultPerPURouter = require('./votingResultPerPU');
 const votingResultPerGEORouter = require('./votingResultPerGEO');
-
+const pollingUnitRouter = require('./pollingUnit');
 
 /**
  * v1 master route. All api's must have a pattern and be inserted here
@@ -16,6 +16,9 @@ const votingResultPerGEORouter = require('./votingResultPerGEO');
 router.use('/electionResult', electionResultRouter);
 router.use('/votingResultPerPU', votingResultPerPURouter);
 router.use('/votingResultPerGEO', votingResultPerGEORouter);
+router.use('/pollingUnit', pollingUnitRouter);
+
+
 
 
 module.exports = router;

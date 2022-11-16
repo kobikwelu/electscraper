@@ -10,7 +10,7 @@ const { votingResultController }  = require('../../../controllers');
 const  electionCache   = require('../../../middlewares/electionCache')
 
 /*
-* *********************************POST*****************************************
+* *********************************GET*****************************************
 */
 
 router.get('/', votingResultController.getVotingResultPerPU);

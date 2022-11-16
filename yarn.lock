@@ -647,8 +647,8 @@ __metadata:
   linkType: hard
 
 "aws-sdk@npm:^2.656.0":
-  version: 2.1252.0
-  resolution: "aws-sdk@npm:2.1252.0"
+  version: 2.1255.0
+  resolution: "aws-sdk@npm:2.1255.0"
   dependencies:
     buffer: 4.9.2
     events: 1.1.1
@@ -660,7 +660,7 @@ __metadata:
     util: ^0.12.4
     uuid: 8.0.0
     xml2js: 0.4.19
-  checksum: c1876479577bc26697d791d9b53b297fa3bfb17cf70157c282a156799ca573bdc1102436b3942c759cddd060aa746814cebc06fa1bad08c76ef3c1e510a8f6d5
+  checksum: aa2029b6d0dfa2605fcfc86e9b48468222b2eb7eb40f95d28be2ebf39426a6cdf0ea7871fd0e5d14f1639c4d533e7547fcdbd205120284463801b88b7de0890e
   languageName: node
   linkType: hard
 
@@ -2125,21 +2125,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@patch:fsevents@~2.3.2#~builtin<compat/fsevents>":
-  version: 2.3.2
-  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=18f3a7"
-  dependencies:
-    node-gyp: latest
-  conditions: os=darwin
-  languageName: node
-  linkType: hard
-
-fsevents@~2.3.2:
+"fsevents@npm:~2.3.2":
   version: 2.3.2
   resolution: "fsevents@npm:2.3.2"
   dependencies:
     node-gyp: latest
   checksum: 97ade64e75091afee5265e6956cb72ba34db7819b4c3e94c431d4be2b19b8bb7a2d4116da417950c3425f17c8fe693d25e20212cac583ac1521ad066b77ae31f
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
+"fsevents@patch:fsevents@~2.3.2#~builtin<compat/fsevents>":
+  version: 2.3.2
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=18f3a7"
+  dependencies:
+    node-gyp: latest
   conditions: os=darwin
   languageName: node
   linkType: hard
@@ -3593,11 +3593,11 @@ fsevents@~2.3.2:
   linkType: hard
 
 "moment-timezone@npm:^0.5.x":
-  version: 0.5.38
-  resolution: "moment-timezone@npm:0.5.38"
+  version: 0.5.39
+  resolution: "moment-timezone@npm:0.5.39"
   dependencies:
     moment: ">= 2.9.0"
-  checksum: ff7077de41f2c41a0026cd2b310154c14df8f918331a4ebe88f5872a599deb5e463b123c96990dc447b7474a81c9f3aef7ac57c3d0dfc3bfb9af2cc5b0bca826
+  checksum: 9f972d3a29b2726d4fd1464df27738b756441fe57575f087cda91b7716a5a31d2cfd274255e3edfb15eb60af3ccf33fd339527b456092cac1a2a4124e4369c8b
   languageName: node
   linkType: hard
 
