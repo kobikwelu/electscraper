@@ -1,8 +1,8 @@
 const getCachedWardData = async (req, res, next) => {
-    const {wardCode} = req.body
+    const {dataPoint} = req.body
     let cachedWardData
     try {
-        const cacheResults = await redisClient.get(wardCode);
+        const cacheResults = await redisClient.get(dataPoint);
         if (cacheResults) {
             cachedWardData = JSON.parse(cacheResults);
             logger.info(`pulling item from the cache`)

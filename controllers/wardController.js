@@ -3,14 +3,42 @@ const PartyResult = require("../models/PartyResult");
 const PollingUnit = require("../models/PollingUnit");
 
 
+exports.getPuInWard = async (req, res) => {
+    const {dataPoint} = req.body
+    let result = {
+        name: '',
+        meta: {
+            pUnits: '',
+            count: ''
+        }
+    }
 
-
-exports.getWardsPerLGA = async (req, res) => {
-    const {pollingUnit_Code} = req.body
-
-
-    if (pollingUnit_Code) {
+    if (dataPoint && (dataPoint.length === 8)) {
         try {
+            let returnedDataPoint = await PollingUnit.find({
+                "pollingUnit_Code": {
+                    "$regex": dataPoint
+                }
+            })
+            if (returnedDataPoint) {
+                result.ward = returnedDataPoint[0].ward;
+                result.meta.pUnits = returnedDataPoint;
+                result.meta.count = returnedDataPoint.length
+                await redisClient.set(dataPoint, JSON.stringify(result), {
+                    ex: 120,
+                    NX: true
+                })
+                res.status(200);
+                res.json({
+                    result
+                })
+            } else {
+                res.status(200);
+                res.json({
+                    result: []
+                })
+            }
+
 
         } catch (error) {
             logger.error(error)
@@ -22,7 +50,8 @@ exports.getWardsPerLGA = async (req, res) => {
     } else {
         res.status(400);
         res.json({
-            message: "Missing required values"
+            message: "Missing required values or check that you are passing the " +
+                "correct datapoint char length"
         })
     }
 
