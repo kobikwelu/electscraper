@@ -16,18 +16,22 @@ exports.getWardInLGA = async (req, res) => {
         try {
             let returnedDataPoint = await PollingUnit.find({
                 "pollingUnit_Code": {
-                    "$regex": dataPoint
+                    "$regex": '^' + dataPoint
                 }
             })
-            if (returnedDataPoint){
-              let groupedWards = lodash.groupBy(returnedDataPoint, 'ward')
+            if (returnedDataPoint) {
+                let groupedWards = lodash.groupBy(returnedDataPoint, 'ward')
                 result.lga = returnedDataPoint[0].lga;
                 result.meta = groupedWards
+                result.count = lodash.size(groupedWards)
 
-                await redisClient.set(dataPoint, JSON.stringify(result), {
-                    ex: 120,
-                    NX: true
-                })
+                if (result.count > 0) {
+                    logger.info('item is not in the cache this time, so writing to cache')
+                    await redisClient.set(dataPoint, JSON.stringify(result), {
+                        ex: 120,
+                        NX: true
+                    })
+                }
                 res.status(200);
                 res.json({
                     result

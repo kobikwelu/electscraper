@@ -1,14 +1,14 @@
 const getCachedLGAData = async (req, res, next) => {
     const {dataPoint} = req.body
-    let cachedWardData
+    let cachedLGAData
     try {
         const cacheResults = await redisClient.get(dataPoint);
         if (cacheResults) {
-            cachedWardData = JSON.parse(cacheResults);
+            cachedLGAData = JSON.parse(cacheResults);
             logger.info(`pulling item from the cache`)
             res.status(200)
             res.send({
-                result: cachedWardData
+                result: cachedLGAData
             })
         } else {
             logger.info('item not in cache')

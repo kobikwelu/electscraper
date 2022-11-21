@@ -8,7 +8,8 @@ const pollingUnitSchema = new mongoose.Schema({
     ward: String,
     pollingUnit_id: Number,
     pollingUnit_name: String,
-    pollingUnit_Code: String
+    pollingUnit_Code: String,
+    remark: String
 });
 
 

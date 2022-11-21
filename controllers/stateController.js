@@ -1,26 +1,31 @@
-
+const ElectionResult = require("../models/ElectionResult");
+const PartyResult = require("../models/PartyResult");
 const PollingUnit = require("../models/PollingUnit");
+let lodash = require('lodash')
 
-exports.getDataPoint = async (req, res) => {
-    const {dataPoint} = req.body
+
+exports.getLGAInState = async (req, res) => {
+    const {state} = req.body
     let result = {
-        pUnits: '',
-        count: ''
+        state: '',
+        meta: ''
     }
-    if (dataPoint) {
+
+
+    if (state) {
         try {
             let returnedDataPoint = await PollingUnit.find({
-                "pollingUnit_Code": {
-                    "$regex": '^' + dataPoint
-                }
+               state: state
             })
-
             if (returnedDataPoint){
-                result.pUnits = returnedDataPoint;
-                result.count = returnedDataPoint.length
-                if (result.count > 0){
+                let groupedLGA = lodash.groupBy(returnedDataPoint, 'lga')
+                result.state = returnedDataPoint[0].state;
+                result.meta = groupedLGA
+                result.count = lodash.size(groupedLGA)
+
+                if (result.count > 0) {
                     logger.info('item is not in the cache this time, so writing to cache')
-                    await redisClient.set(dataPoint, JSON.stringify(result), {
+                    await redisClient.set(state, JSON.stringify(result), {
                         ex: 120,
                         NX: true
                     })
@@ -29,7 +34,6 @@ exports.getDataPoint = async (req, res) => {
                 res.json({
                     result
                 })
-
             } else {
                 res.status(200);
                 res.json({
@@ -46,10 +50,14 @@ exports.getDataPoint = async (req, res) => {
     } else {
         res.status(400);
         res.json({
-            message: "Missing required values"
+            message: "Missing required values or check that you are passing the " +
+                "correct datapoint char length"
         })
     }
 
 };
+
+
+
 
 

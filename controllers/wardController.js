@@ -5,29 +5,19 @@ const PollingUnit = require("../models/PollingUnit");
 
 exports.getPuInWard = async (req, res) => {
     const {dataPoint} = req.body
-    let result = {
-        name: '',
-        meta: {
-            pUnits: '',
-            count: ''
-        }
-    }
+
 
     if (dataPoint && (dataPoint.length === 8)) {
         try {
-            let returnedDataPoint = await PollingUnit.find({
-                "pollingUnit_Code": {
-                    "$regex": dataPoint
+           let result = await getAllPUsInWard(dataPoint)
+            if (result) {
+                if (result.meta.count > 0){
+                    logger.info('item is not in the cache this time, so writing to cache')
+                    await redisClient.set(dataPoint, JSON.stringify(result), {
+                        ex: 120,
+                        NX: true
+                    })
                 }
-            })
-            if (returnedDataPoint) {
-                result.ward = returnedDataPoint[0].ward;
-                result.meta.pUnits = returnedDataPoint;
-                result.meta.count = returnedDataPoint.length
-                await redisClient.set(dataPoint, JSON.stringify(result), {
-                    ex: 120,
-                    NX: true
-                })
                 res.status(200);
                 res.json({
                     result
@@ -58,6 +48,29 @@ exports.getPuInWard = async (req, res) => {
 };
 
 
+const getAllPUsInWard = async (dataPoint) => {
 
+    let result = {
+        name: '',
+        meta: {
+            pUnits: '',
+            count: ''
+        }
+    }
+    let returnedDataPoint = await PollingUnit.find({
+        "pollingUnit_Code": {
+            "$regex": '^' + dataPoint
+        }
+    })
+    if (returnedDataPoint) {
+        result.ward = returnedDataPoint[0].ward;
+        result.meta.pUnits = returnedDataPoint;
+        result.meta.count = returnedDataPoint.length
+
+        return result
+    } else {
+        return null
+    }
+}
 
 

@@ -5,6 +5,7 @@ const votingResultController = require('./votingResultController');
 const pollingUnitController = require('./pollingUnitController');
 const wardController = require('./wardController');
 const lgaController = require('./lgaController');
+const stateController = require('./stateController');
 
 
 module.exports = {
@@ -12,5 +13,6 @@ module.exports = {
     votingResultController,
     pollingUnitController,
     wardController,
-    lgaController
+    lgaController,
+    stateController
 }
