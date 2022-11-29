@@ -6,6 +6,7 @@ const pollingUnitController = require('./pollingUnitController');
 const wardController = require('./wardController');
 const lgaController = require('./lgaController');
 const stateController = require('./stateController');
+const districtController = require('./districtController');
 
 
 module.exports = {
@@ -14,5 +15,6 @@ module.exports = {
     pollingUnitController,
     wardController,
     lgaController,
-    stateController
+    stateController,
+    districtController
 }
