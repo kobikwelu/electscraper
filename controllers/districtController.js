@@ -8,8 +8,10 @@ exports.getDistrict = async (req, res) => {
     const {state} = req.body
 
     let result = {
+        governor:{},
         senate: {},
-        houseOfAssembly: {}
+        houseOfAssembly: {},
+        stateHouseOfAssembly: {}
     }
 
     if (state) {
@@ -36,6 +38,17 @@ exports.getDistrict = async (req, res) => {
                 })
                 return federalDistrict.candidates = federalConstituencyCandidates
             }))
+
+            let governorShipCandidates = await Candidate.find({
+                state: state,
+                "$or" : [{
+                    position: 'Governorship'
+                }, {
+                    position: 'Deputy- Governorship'
+                }]
+            })
+
+            result.governor = lodash.groupBy(governorShipCandidates, 'party')
             result.senate.senatorialDistrict = returnedSenatorialDistricts
             result.houseOfAssembly.federalDistricts = returnedFederalConstituencies
 

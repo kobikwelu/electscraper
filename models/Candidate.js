@@ -14,7 +14,8 @@ const candidateSchema = new mongoose.Schema({
     age: Number,
     gender: String,
     qualifications: String,
-    remarks: String
+    remarks: String,
+    election_name: String
 });
 
 
