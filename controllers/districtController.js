@@ -23,18 +23,22 @@ exports.getDistrict = async (req, res) => {
                 state: state
             })
 
-        await Promise.all(returnedSenatorialDistricts.map(async (senatorialDistrict) => {
+            await Promise.all(returnedSenatorialDistricts.map(async (senatorialDistrict) => {
                let senatorialCandidates = await Candidate.find({
                    state: state,
-                   constituency: senatorialDistrict.senate_constituency_name
+                   "constituency": {
+                       "$regex": '^' + senatorialDistrict.senate_constituency_name
+                   }
                })
-                return senatorialDistrict.candidates = senatorialCandidates
+                 return senatorialDistrict.candidates = senatorialCandidates
             }))
 
-             await Promise.all(returnedFederalConstituencies.map(async (federalDistrict)=>{
+              await Promise.all(returnedFederalConstituencies.map(async (federalDistrict)=>{
                let federalConstituencyCandidates  = await Candidate.find({
                     state: state,
-                    constituency: federalDistrict.federal_constituency_name
+                   "constituency": {
+                       "$regex": '^' + federalDistrict.federal_constituency_name
+                   }
                 })
                 return federalDistrict.candidates = federalConstituencyCandidates
             }))
@@ -51,6 +55,7 @@ exports.getDistrict = async (req, res) => {
             result.governor = lodash.groupBy(governorShipCandidates, 'party')
             result.senate.senatorialDistrict = returnedSenatorialDistricts
             result.houseOfAssembly.federalDistricts = returnedFederalConstituencies
+
 
             await redisClient.set(state, JSON.stringify(result), {
                 ex: 120,
