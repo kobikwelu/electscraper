@@ -306,7 +306,8 @@ exports.signIn = async (req, res) => {
                             logger.info('issuing token')
                             res.json({
                                 message: ResponseTypes.SUCCESS["200"],
-                                payload: await genToken(user.role, user.username, user.email)
+                                payload: await genToken(user.role, user.username, user.email),
+                                isEmailConfirmed: user.isEmailConfirmed
                             })
                         } else {
                             res.status(401);
@@ -618,13 +619,18 @@ exports.verifyActivationEmail = async (req, res) => {
 
     if (uuid && email) {
         try {
+            logger.info('activation process begin')
             const user = await User.findOne({isEmailConfirmed: false}).byEmail(email);
+            logger.info('unconfirmed email account identified')
             if (user) {
                 if (await isSameUser(uuid, user.emailActivationToken)) {
                     if (await isSameUser(email, user.email)) {
                         user.isEmailConfirmed = true;
+                        logger.info('setting isEmailConfirmed to true')
                         user.isAccountActive = true;
+                        logger.info('setting isAccountActive to true')
                         user.save();
+                        logger.info('activation process completed. Account updated')
                         res.status(200);
                         res.json({
                             message: ResponseTypes.SUCCESS["200"],
