@@ -11,6 +11,8 @@ const stateRouter = require('./state');
 
 const districtRouter = require('./district');
 
+const userRouter = require('./user');
+
 /**
  * v1 master route. All api's must have a pattern and be inserted here
  * All non-auth routes must be protected by the jwt check.
@@ -29,5 +31,7 @@ router.use('/lga', lgaRouter);
 router.use('/state', stateRouter);
 
 router.use('/district', districtRouter);
+
+router.use('/user', userRouter)
 
 module.exports = router;
