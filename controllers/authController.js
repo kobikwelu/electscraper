@@ -147,7 +147,7 @@ const isSameUser = async (email, key) => {
  * @returns {Promise<string|*>}
  */
 const getSigningKey = async (typeOfKey) => {
-    if (process.env.NODE_ENV === 'staging') {
+    if (process.env.NODE_ENV === 'production') {
         if (typeOfKey === 'public') {
             return keys.key.public
         } else {
