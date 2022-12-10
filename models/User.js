@@ -8,6 +8,17 @@ const userSchema = new mongoose.Schema({
     name: String,
     password: String,
     role: String,
+    tier: {
+        type: String,
+        required: [true, 'account tier is required - it must be basic | team | enterprise'],
+        validate: [{
+            validator : (value) => {
+                const tierRegex = /\b(?:basic|team|enterprise)\b/
+                return tierRegex.test(value);
+            },
+            message: props => `${props.value} is not a valid account tier - it must be basic | team | enterprise`
+        }]
+    },
     profile:{
         address: {
             type: String,
@@ -77,14 +88,19 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
-    lastLoginTime: Date,
+    lastCheckInTime: Date,
+    dailyCounter: Number,
     registrationDate: Date
 });
 
 userSchema.pre('save', function (next){
     if (this.isNew) {
         this.registrationDate = new Date();
+        this.lastCheckInTime = new Date();
+        this.dailyCounter = 0;
         this.markModified('registrationDate');
+        this.markModified('lastCheckInTime');
+        this.markModified('dailyCounter');
     }
     next();
 });

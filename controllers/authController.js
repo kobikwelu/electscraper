@@ -206,10 +206,10 @@ const deleteUser = async (email) => {
  * @returns {Promise<void>}
  */
 exports.signUp = async (req, res) => {
-    const { email, role, password, name } = req.body;
+    const { email, role, password, name , tier} = req.body;
     const unHashedPassword = password;
 
-    if (email && role && unHashedPassword && name) {
+    if (email && role && unHashedPassword && name && tier) {
         let user = null;
         try {
             const count = await User.countDocuments({email});
@@ -226,6 +226,7 @@ exports.signUp = async (req, res) => {
                     password,
                     name,
                     role,
+                    tier,
                     emailActivationToken: uuid(),
                     emailActivationTokenExpiryDate: await expiresInV3(2880)
                 })
@@ -307,8 +308,14 @@ exports.signIn = async (req, res) => {
                         logger.info('')
                         const doesMatch = await bcrypt.compare(password, user.password);
                         if (doesMatch) {
+                            //TODO: DO A DATE COMPARE OF THE TWO TIMESTAMPS TO SEE IF THEY ARE
+                            // >5 HITS CHECK IF THEIR TIER IF BASIC CHECK IF THEIR LAST HIT WAS <24 HOURS, IF SO, DISABLE ACCOUNT, SHOW GATE
+                            // > 5 TIER <20 WITHIN 24 HOURS ALLOW ELSE LOCK AND SHOW GATE
+                            // >20 WITHIN 24 HOURS ONLY ENTERPRISE
+
                             user.lastLoginTime = new Date();
                             user.markModified('lastLoginTime');
+                            user.dailyCounter = user.dailyCounter +1
                             await user.save();
                             logger.info('issuing token')
                             res.json({
@@ -349,6 +356,9 @@ exports.signIn = async (req, res) => {
     }
 }
 
+const checkRateLimit = async (user) => {
+
+}
 
 /**
  *
