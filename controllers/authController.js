@@ -1,11 +1,18 @@
-
 const bcrypt = require('bcryptjs');
 const uuid = require('uuid/v4');
 let jwt = require('jwt-simple');
 const password = require('generate-password');
 
 const ResponseTypes = require('../constants/ResponseTypes');
+const AccountTierTypes = require('../constants/AccountTierTypes');
 const configs = require(`../config/env/${process.env.NODE_ENV}`);
+const config = require("../config");
+const {
+    basic_unregistered: basic_unregistered,
+    basic_registered: basic_registered,
+    team: team,
+    enterprise: enterprise
+} = config.accountTier;
 
 const User = require('../models/User');
 const {authBusinessRules} = require('../businessRules')
@@ -16,9 +23,9 @@ const notificationController = require('../controllers/notificationController');
 const keys = require('../config');
 const fs = require('fs');
 
+
 const SALT_ROUNDS = 10;
 const MILLISECONDS = 60000;
-
 
 
 const genToken = async (role, username, email) => {
@@ -27,14 +34,14 @@ const genToken = async (role, username, email) => {
     if (process.env.NODE_ENV === 'production') {
         origin = `${keys.Origin_backend}`;
     } else {
-        origin  = "http://localhost:8080"
+        origin = "http://localhost:8080"
     }
     let expiresAt = await expiresInV3(1440);
     let issuedAt = await getCurrentTimeV2();
     let token = jwt.encode({
         //TODO: issuer/request (origin) source must be added for extra security
         //issuer   : "http://localhost:8080",
-        issuer   : origin,
+        issuer: origin,
         //issuer: `${keys.Origin_backend}`,
         issuedAt: issuedAt,
         expiresAt: expiresAt,
@@ -67,7 +74,7 @@ const getCurrentTimeV2 = async () => {
 exports.verifyToken = async (token, key, origin) => {
     try {
         const decodedPayload = await jwt.decode(token, await getSigningKey('private'), false, 'HS512')
-        logger.info('decoded token '+ decodedPayload)
+        logger.info('decoded token ' + decodedPayload)
         if (await isTokenValid(decodedPayload.expiresAt)) {
             if (await isTrustedSource(decodedPayload.issuer, origin)) {
                 if (await isSameUser(decodedPayload.email, key)) {
@@ -92,17 +99,24 @@ exports.verifyToken = async (token, key, origin) => {
  * @param key
  * @returns {Promise<string|null>}
  */
-exports.getAccountState = async(key)=>{
-    try{
+exports.getAccountState = async (key) => {
+    try {
         const user = await User.findOne({}).byEmail(key);
-        const { isAccountActive, isEmailConfirmed} = user;
-        if (isEmailConfirmed){
+        const {accountState, isEmailConfirmed} = user;
+        if (isEmailConfirmed && (!accountState.disabled.isDisabled)) {
             return null
-        }else {
-            return ResponseTypes.SUCCESS.BUSINESS_NOTIFICATION.EMAIL_CONFIRMATION_STILL_PENDING
+        } else {
+            if (accountState.disabled.isDisabled) {
+                return accountState.disabled.reasons[0]
+            } else {
+                return {
+                    code: 'EMAIL_PENDING',
+                    description: ResponseTypes.SUCCESS.BUSINESS_NOTIFICATION.EMAIL_CONFIRMATION_STILL_PENDING
+                }
+            }
         }
-    }catch(error){
-        console.log(error);
+    } catch (error) {
+        logger.info(error)
         return ResponseTypes.ERROR["500"]
     }
 
@@ -180,7 +194,6 @@ const generateTemporaryPassword = async () => {
 }
 
 
-
 /**
  *
  * @param email
@@ -206,10 +219,10 @@ const deleteUser = async (email) => {
  * @returns {Promise<void>}
  */
 exports.signUp = async (req, res) => {
-    const { email, role, password, name , tier} = req.body;
+    const {email, role, password, name} = req.body;
     const unHashedPassword = password;
 
-    if (email && role && unHashedPassword && name && tier) {
+    if (email && role && unHashedPassword && name) {
         let user = null;
         try {
             const count = await User.countDocuments({email});
@@ -226,7 +239,7 @@ exports.signUp = async (req, res) => {
                     password,
                     name,
                     role,
-                    tier,
+                    tier: 'BASIC_UNREGISTERED',
                     emailActivationToken: uuid(),
                     emailActivationTokenExpiryDate: await expiresInV3(2880)
                 })
@@ -250,10 +263,10 @@ exports.signUp = async (req, res) => {
             }
         } catch (error) {
             logger.info(error)
-            if (user){
+            if (user) {
                 await deleteUser(user.email);
             }
-            if (error._message === 'User validation failed'){
+            if (error._message === 'User validation failed') {
                 res.status(400);
                 res.json({
                     message: ResponseTypes.ERROR["400"]
@@ -297,32 +310,90 @@ exports.signIn = async (req, res) => {
                 })
             } else {
                 const rulesReportArray = await authBusinessRules.applyLoginRules(user, password);
-                if (rulesReportArray.indexOf('Invalid credentials') !== -1){
+                if (rulesReportArray.indexOf('Invalid credentials') !== -1) {
                     res.status(401);
                     res.json({
                         message: ResponseTypes.ERROR["401"],
                         description: ResponseTypes.ERROR.MESSAGES.INVALID_CREDENTIALS
                     })
                 } else {
+                    let tokenPreAccessChecks = await buildCaseForTokenAccess(user)
                     if (rulesReportArray.length === 0) {
                         logger.info('')
                         const doesMatch = await bcrypt.compare(password, user.password);
                         if (doesMatch) {
-                            //TODO: DO A DATE COMPARE OF THE TWO TIMESTAMPS TO SEE IF THEY ARE
-                            // >5 HITS CHECK IF THEIR TIER IF BASIC CHECK IF THEIR LAST HIT WAS <24 HOURS, IF SO, DISABLE ACCOUNT, SHOW GATE
-                            // > 5 TIER <20 WITHIN 24 HOURS ALLOW ELSE LOCK AND SHOW GATE
-                            // >20 WITHIN 24 HOURS ONLY ENTERPRISE
+                            if (tokenPreAccessChecks.meta.durationSinceLastAccess > 24.00000) {
+                                await unlockAccountBasedOnElapsedTimeLimit(tokenPreAccessChecks, user)
+                            }
+                            logger.info('checking if account is disabled ')
+                            if (!user.accountState.disabled.isDisabled) {
+                                logger.info('account is not disabled ')
+                                if (tokenPreAccessChecks.isTokenRequestGranted) {
+                                    logger.info('token request is granted')
+                                    user.lastCheckInTime = new Date();
+                                    user.markModified('lastCheckInTime');
+                                    if (tokenPreAccessChecks.meta.durationSinceLastAccess > 24.0000) {
+                                        logger.info(`its been ${tokenPreAccessChecks.meta.durationSinceLastAccess} hours since token was last issued`)
+                                        user.dailyCounter = 0
+                                    } else {
+                                        user.dailyCounter = user.dailyCounter + 1
+                                    }
+                                    await user.save();
+                                    logger.info('latest user state updated')
+                                    logger.info('issuing token')
+                                    res.json({
+                                        message: ResponseTypes.SUCCESS["200"],
+                                        payload: await genToken(user.role, user.username, user.email),
+                                        isEmailConfirmed: user.isEmailConfirmed
+                                    })
+                                } else {
+                                    logger.info('token request is denied')
+                                    user.accountState.disabled.isDisabled = true
+                                    user.accountState.disabled.reasons.push({
+                                        code: tokenPreAccessChecks.meta.disableReason.code,
+                                        description: tokenPreAccessChecks.meta.disableReason.description
+                                    })
+                                    await user.save();
+                                    res.json({
+                                        message: ResponseTypes.SUCCESS["200"],
+                                        businessError: {
+                                            tokenAccess: tokenPreAccessChecks.isTokenRequestGranted,
+                                            accountState: tokenPreAccessChecks.meta.accountState,
+                                            message: tokenPreAccessChecks.meta.message
+                                        }
+                                    })
+                                }
+                            } else {
+                                logger.info('account is disabled...checking reason')
+                                if (user.accountState.disabled.reasons[0].code === 'ACCOUNT_LIMIT') {
+                                    logger.info('account is disabled...for ACCOUNT_LIMIT')
+                                    let errorMessage
+                                    if (user.tier === AccountTierTypes.BASIC_UNREGISTERED) {
+                                        errorMessage = 'please activate your account to continue access'
+                                    } else {
+                                        errorMessage = 'please upgrade your account to continue access'
+                                    }
+                                    res.json({
+                                        message: ResponseTypes.SUCCESS["200"],
+                                        businessError: {
+                                            tokenAccess: false,
+                                            accountState: `over the limit for account ${user.email}`,
+                                            message: errorMessage
+                                        }
+                                    })
+                                } else {
+                                    logger.info('account is disabled...for OTHER reasons')
+                                    res.json({
+                                        message: ResponseTypes.SUCCESS["200"],
+                                        businessError: {
+                                            tokenAccess: false,
+                                            accountState: 'Account is disabled',
+                                            message: 'reach us at account@tallyng.com to unlock your account'
+                                        }
+                                    })
+                                }
+                            }
 
-                            user.lastLoginTime = new Date();
-                            user.markModified('lastLoginTime');
-                            user.dailyCounter = user.dailyCounter +1
-                            await user.save();
-                            logger.info('issuing token')
-                            res.json({
-                                message: ResponseTypes.SUCCESS["200"],
-                                payload: await genToken(user.role, user.username, user.email),
-                                isEmailConfirmed: user.isEmailConfirmed
-                            })
                         } else {
                             res.status(401);
                             res.json({
@@ -356,10 +427,100 @@ exports.signIn = async (req, res) => {
     }
 }
 
-const checkRateLimit = async (user) => {
-
+const unlockAccountBasedOnElapsedTimeLimit = async (tokenPreAccessChecks, user) => {
+    logger.info('checking if the account should be unlocked ')
+    user.dailyCounter = 0
+    user.accountState.disabled.isDisabled = false
+    user.accountState.disabled.reasons = []
+    await user.save()
+    logger.info('unlocking the account as it has passed the 24 hour cap limit')
+    tokenPreAccessChecks.meta.accountState = ''
+    tokenPreAccessChecks.meta.disableReason.code = '';
+    tokenPreAccessChecks.meta.disableReason.description = '';
+    tokenPreAccessChecks.isTokenRequestGranted = true
+    logger.info('updating tokenPreAccessCheck to reflect latest state of token access')
 }
 
+
+const buildCaseForTokenAccess = async (user) => {
+    let tokenPreAccessChecks = {
+        isTokenRequestGranted: true,
+        meta: {
+            accountState: '',
+            message: '',
+            durationSinceLastAccess: '',
+            disableReason: {
+                code: '',
+                description: ''
+            }
+        }
+    }
+
+    let currentDateStamp = new Date();
+    let tierThreshold;
+    const {lastCheckInTime, tier, dailyCounter, email} = user
+    let duration = Math.floor(currentDateStamp - lastCheckInTime) / (60 * 60 * 1000)
+
+    if (tier === AccountTierTypes.BASIC_UNREGISTERED) {
+        tierThreshold = basic_unregistered
+    } else if (tier === AccountTierTypes.BASIC_REGISTERED) {
+        tierThreshold = basic_registered
+    } else if (tier === AccountTierTypes.TEAM) {
+        tierThreshold = team
+    } else if (tier === AccountTierTypes.ENTERPRISE) {
+        tierThreshold = enterprise
+    }
+
+    if (dailyCounter < tierThreshold || dailyCounter === tierThreshold) {
+        logger.info('account is not over the basic limit')
+        tokenPreAccessChecks.meta.durationSinceLastAccess = duration;
+    } else if (dailyCounter > tierThreshold) {
+        logger.info('account is over the basic limit')
+        logger.info('starting deep-dive to determine account tier eligibility')
+        if (await isAccountOverTheLimit(tier, duration, dailyCounter)) {
+            logger.info(`request is confirmed to be over the limit for ${tier} tier`)
+            tokenPreAccessChecks.meta.accountState = `over the limit for account ${email}.`
+            tokenPreAccessChecks.meta.durationSinceLastAccess = duration;
+            tokenPreAccessChecks.meta.disableReason.code = 'ACCOUNT_LIMIT';
+            tokenPreAccessChecks.meta.disableReason.description = 'Account limit exceeded';
+            tokenPreAccessChecks.isTokenRequestGranted = false
+            if (tier === AccountTierTypes.BASIC_UNREGISTERED) {
+                tokenPreAccessChecks.meta.message = 'please activate your account to continue access'
+            } else {
+                tokenPreAccessChecks.meta.message = 'please upgrade your account to continue access'
+            }
+            logger.info('setting up business errors')
+        }
+    }
+    return tokenPreAccessChecks
+}
+
+const isAccountOverTheLimit = async (accountTier, duration, dailyCounter) => {
+    logger.info('business rule eligibility check start - based on tier')
+    let isAccountOverTheLimit = false
+    if (accountTier === AccountTierTypes.BASIC_UNREGISTERED) {
+        if (duration < 24 && dailyCounter > basic_unregistered) {
+            isAccountOverTheLimit = true
+        }
+    }
+    if (accountTier === AccountTierTypes.BASIC_REGISTERED) {
+        if (duration < 24 && dailyCounter > basic_registered) {
+            isAccountOverTheLimit = true
+        }
+    }
+    if (accountTier === AccountTierTypes.TEAM) {
+        if (duration < 24 && dailyCounter > team) {
+            isAccountOverTheLimit = true
+        }
+    }
+    if (accountTier === AccountTierTypes.ENTERPRISE) {
+        if (duration < 24 && dailyCounter > enterprise) {
+            isAccountOverTheLimit = true
+        }
+    }
+    logger.info('business rule eligibility check completed - based on tier')
+    return isAccountOverTheLimit
+}
 /**
  *
  * @param req
@@ -412,6 +573,12 @@ exports.getUser = async (req, res) => {
  *!
  **/
 
+/**
+ *  tier - must be one of the following TEAM | ENTERPRISE
+ * @param req
+ * @param res
+ * @returns {Promise<void>}
+ */
 exports.updateUser = async (req, res) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
     let user = null;
@@ -419,7 +586,8 @@ exports.updateUser = async (req, res) => {
         'name',
         'profileImageUrl',
         'bioInfo',
-        'address'
+        'address',
+        'tier'
     ];
     try {
         user = await User.findOne({key});
@@ -440,13 +608,11 @@ exports.updateUser = async (req, res) => {
             });
         }
         await user.save();
-        await auditLogsController.addLog(user.email, req.useragent, 'update user', ResponseTypes.SUCCESS["200"], 'update successful');
         res.status(200);
         res.json({
             description: ResponseTypes.SUCCESS["200"]
         })
     } catch (error) {
-        await auditLogsController.addLog(key, req.useragent, 'update user', ResponseTypes.ERROR["500"], error);
         res.status(500);
         res.json({
             description: ResponseTypes.ERROR["500"]
@@ -646,7 +812,16 @@ exports.verifyActivationEmail = async (req, res) => {
                         logger.info('setting isEmailConfirmed to true')
                         user.isAccountActive = true;
                         logger.info('setting isAccountActive to true')
-                        user.save();
+                        user.tier = 'BASIC_REGISTERED'
+                        logger.info('setting tier to basic_registered')
+                        if (user.accountState.disabled.isDisabled && user.accountState.disabled.reasons[0].code === 'ACCOUNT_LIMIT'){
+                            logger.info('account was locked due to limit on pre-activated account')
+                            logger.info('unlocking and resetting counter')
+                            user.accountState.disabled.isDisabled = false;
+                            user.accountState.disabled.reasons = []
+                            user.dailyCounter = 0
+                        }
+                        await user.save();
                         logger.info('activation process completed. Account updated')
                         res.status(200);
                         res.json({

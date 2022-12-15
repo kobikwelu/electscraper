@@ -34,7 +34,7 @@ router.get('/activateAccount/:uuid', authController.verifyActivationEmail);
  * *********************************PATCH*************************************
  */
 
-//router.patch('/', [checkJwt, checkAccountStatus], authController.updateUser);
+router.patch('/', [checkJwt, checkAccountStatus], authController.updateUser);
 
 
 module.exports = router;

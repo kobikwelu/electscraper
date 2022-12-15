@@ -14,11 +14,14 @@ const {authController} = require('../controllers');
 const checkAccountStatus = async (req, res, next) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
     const accountStateErrors = await authController.getAccountState(key);
-    if (accountStateErrors && !req.originalUrl.includes('/myuser')) {
+    if (accountStateErrors.description && !req.originalUrl.includes('/myuser')) {
         return await buildAccountStatusMessage(accountStateErrors, res);
     } else {
-        if (accountStateErrors === ResponseTypes.SUCCESS.BUSINESS_NOTIFICATION.EMAIL_CONFIRMATION_STILL_PENDING){
-            res.locals.accountStateErrors = accountStateErrors;
+        if (accountStateErrors.description === ResponseTypes.SUCCESS.BUSINESS_NOTIFICATION.EMAIL_CONFIRMATION_STILL_PENDING){
+            res.locals.accountStateErrors = accountStateErrors.description;
+        }
+        if (accountStateErrors.code === 'ACCOUNT_LIMIT'){
+            res.locals.accountStateErrors = accountStateErrors.description;
         }
         next();
     }

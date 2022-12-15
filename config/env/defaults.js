@@ -37,7 +37,13 @@ const config = {
     AWS_SECRET: process.env.AWS_SECRET,
     AWS_BUCKET: process.env.AWS_BUCKET,
   },
-  cronTime: process.env.CRON_TIME
+  cronTime: process.env.CRON_TIME,
+  accountTier:{
+    basic_unregistered: process.env.ACCOUNT_TIER_BASIC_UNREGISTERED,
+    basic_registered: process.env.ACCOUNT_TIER_BASIC_REGISTERED,
+    team: process.env.ACCOUNT_TIER_TEAM,
+    enterprise: process.env.ACCOUNT_TIER_ENTERPRISE
+  }
 };
 
 /**
