@@ -3,10 +3,10 @@ const router = express.Router();
 
 const { lgaController}  = require('../../../controllers');
 const lgaCache   = require('../../../middlewares/lgaCache')
-const checkJwt = require('../../../middlewares/checkJwt')
-const checkAccountStatus = require('../../../middlewares/checkAccountStatus')
+const {checkJwt} = require('../../../middlewares/checkJwt')
+const {checkAccountStatus} = require('../../../middlewares/checkAccountStatus')
 
-router.get('/', [checkJwt.checkJwt, checkAccountStatus.checkAccountStatus, lgaCache.getCachedLGAData], lgaController.getWardInLGA);
+router.get('/', [checkJwt, checkAccountStatus, lgaCache.getCachedLGAData], lgaController.getWardInLGA);
 
 
 

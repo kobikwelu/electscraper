@@ -3,9 +3,11 @@ const router = express.Router();
 
 const { stateController}  = require('../../../controllers');
 const  stateCache   = require('../../../middlewares/stateCache')
+const  { checkJwt }   = require('../../../middlewares/checkJwt')
+const  { checkAccountStatus }   = require('../../../middlewares/checkAccountStatus')
 
 
-router.get('/', [stateCache.getCachedStateData], stateController.getLGAInState);
+router.get('/', [checkJwt, checkAccountStatus, stateCache.getCachedStateData], stateController.getLGAInState);
 
 
 

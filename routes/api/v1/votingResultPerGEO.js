@@ -8,12 +8,14 @@ const router = express.Router();
 
 const { votingResultController }  = require('../../../controllers');
 const  electionCache   = require('../../../middlewares/electionCache')
+const  { checkJwt }   = require('../../../middlewares/checkJwt')
+const  { checkAccountStatus }   = require('../../../middlewares/checkAccountStatus')
 
 /*
 * *********************************POST*****************************************
 */
 
-router.get('/', votingResultController.getVotingResultPerGEO);
+router.get('/', [checkJwt, checkAccountStatus], votingResultController.getVotingResultPerGEO);
 
 
 module.exports = router;

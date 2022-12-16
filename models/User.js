@@ -1,5 +1,3 @@
-
-
 const mongoose = require('mongoose');
 const db = require('../dbConnect').get();
 
@@ -12,14 +10,20 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'account tier is required - it must be BASIC_UNREGISTERED | BASIC_REGISTERED | TEAM | ENTERPRISE'],
         validate: [{
-            validator : (value) => {
+            validator: (value) => {
                 const tierRegex = /\b(?:BASIC_UNREGISTERED|BASIC_REGISTERED|TEAM|ENTERPRISE)\b/
                 return tierRegex.test(value);
             },
             message: props => `${props.value} is not a valid account tier - it must be basic | team | enterprise`
         }]
     },
-    profile:{
+    subscriptionPlan: {
+        dollarCost: Number,
+        autoRenewal: Boolean,
+        expiryDate: Date,
+        name: String
+    },
+    profile: {
         address: {
             type: String,
             default: ''
@@ -44,7 +48,7 @@ const userSchema = new mongoose.Schema({
             type: String,
             default: ''
         },
-        comments:[{
+        comments: [{
             text: String,
             images: [""],
             createdAt: {
@@ -86,13 +90,13 @@ const userSchema = new mongoose.Schema({
                 type: Boolean,
                 default: false,
             },
-            reasons:[{
+            reasons: [{
                 code: String,
                 description: String
             }]
         }
     },
-    temporaryPassword:  {
+    temporaryPassword: {
         type: String,
         default: null,
     },
@@ -101,7 +105,7 @@ const userSchema = new mongoose.Schema({
     registrationDate: Date
 });
 
-userSchema.pre('save', function (next){
+userSchema.pre('save', function (next) {
     if (this.isNew) {
         this.registrationDate = new Date();
         this.lastCheckInTime = new Date();
@@ -114,7 +118,7 @@ userSchema.pre('save', function (next){
 });
 
 userSchema.query.byEmail = function (email) {
-    return this.where({ email });
+    return this.where({email});
 };
 
 
