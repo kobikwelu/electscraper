@@ -100,26 +100,32 @@ exports.verifyToken = async (token, key, origin) => {
  * @returns {Promise<string|null>}
  */
 exports.getAccountState = async (key) => {
+    let error
     try {
         const user = await User.findOne({}).byEmail(key);
         const {accountState, isEmailConfirmed} = user;
         if (isEmailConfirmed && (!accountState.disabled.isDisabled)) {
-            return null
+            logger.info('account is confirmed and is not disabled. Proceeding past second middleware check')
+            error = {
+                code: '',
+                description: ''
+            }
         } else {
             if (accountState.disabled.isDisabled) {
-                return accountState.disabled.reasons[0]
+                logger.info('account is  disabled')
+                error = accountState.disabled.reasons[0]
             } else {
-                return {
+                logger.info('account is not yet confirmed')
+                error = {
                     code: 'EMAIL_PENDING',
                     description: ResponseTypes.SUCCESS.BUSINESS_NOTIFICATION.EMAIL_CONFIRMATION_STILL_PENDING
                 }
             }
         }
     } catch (error) {
-        logger.info(error)
         return ResponseTypes.ERROR["500"]
     }
-
+    return error
 }
 
 /**
@@ -536,13 +542,11 @@ exports.getUser = async (req, res) => {
 
         user = await User.findOne({}).byEmail(key);
         if (user === null) {
-            await auditLogsController.addLog(key, req.useragent, 'get user', ResponseTypes.ERROR["401"], ResponseTypes.ERROR.MESSAGES.USER_NOT_FOUND);
             res.status(401);
             res.json({
                 description: ResponseTypes.ERROR.MESSAGES.USER_NOT_FOUND
             })
         } else {
-            await auditLogsController.addLog(user.email, req.useragent, 'get user', ResponseTypes.SUCCESS["200"], 'account information retrieved');
             res.status(200);
             res.json({
                 message: ResponseTypes.SUCCESS["200"],
@@ -556,7 +560,6 @@ exports.getUser = async (req, res) => {
             })
         }
     } catch (error) {
-        await auditLogsController.addLog(key, req.useragent, 'get user', ResponseTypes.ERROR["500"], error);
         res.status(500);
         res.json({
             message: ResponseTypes.ERROR["500"]
@@ -814,7 +817,7 @@ exports.verifyActivationEmail = async (req, res) => {
                         logger.info('setting isAccountActive to true')
                         user.tier = 'BASIC_REGISTERED'
                         logger.info('setting tier to basic_registered')
-                        if (user.accountState.disabled.isDisabled && user.accountState.disabled.reasons[0].code === 'ACCOUNT_LIMIT'){
+                        if (user.accountState.disabled.isDisabled && user.accountState.disabled.reasons[0].code === 'ACCOUNT_LIMIT') {
                             logger.info('account was locked due to limit on pre-activated account')
                             logger.info('unlocking and resetting counter')
                             user.accountState.disabled.isDisabled = false;

@@ -24,6 +24,7 @@ const checkJwt = async (req, res, next) => {
         if (possibleErrorResponse) {
             await buildErrorMessage(possibleErrorResponse, res);
         } else {
+            logger.info('request meets the criteria of token, key, origin')
             next();
         }
     } else {

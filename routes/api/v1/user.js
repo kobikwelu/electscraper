@@ -17,7 +17,7 @@ router.post('/register', authController.signUp);
 router.post('/login', authController.signIn);
 
 
-router.get('/activateAccount/:uuid', authController.verifyActivationEmail);
+router.get('/activateAccount/:uuid',[checkJwt, checkAccountStatus], authController.verifyActivationEmail);
 
 //router.post('/resetPassword/sendEmail', authController.nonAuthResetPasswordRequest);
 //router.post('/resetPassword/passwordGate', authController.nonAuthResetPasswordPriorToLogin);
@@ -26,7 +26,7 @@ router.get('/activateAccount/:uuid', authController.verifyActivationEmail);
 /**
  *  ***************************************** GET*************************************
  */
-//router.get('/myuser', [checkJwt, checkAccountStatus], authController.getUser);
+router.get('/myuser', [checkJwt, checkAccountStatus], authController.getUser);
 
 
 

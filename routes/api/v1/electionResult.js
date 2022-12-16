@@ -8,12 +8,14 @@ const router = express.Router();
 
 const { electionResultController }  = require('../../../controllers');
 const  electionCache   = require('../../../middlewares/electionCache')
+const  { checkJwt }   = require('../../../middlewares/checkJwt')
+const  { checkAccountStatus }   = require('../../../middlewares/checkAccountStatus')
 
 /*
 * *********************************POST*****************************************
 */
 
-router.get('/', [electionCache.getCachedElectionData], electionResultController.getElectionResult);
+router.get('/', [checkJwt, checkAccountStatus, electionCache.getCachedElectionData], electionResultController.getElectionResult);
 
 router.post('/',   [electionCache.preInsertCacheCheck], electionResultController.insertElectionResult);
 
