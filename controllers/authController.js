@@ -331,7 +331,7 @@ exports.signIn = async (req, res) => {
                             if (tokenPreAccessChecks.meta.durationSinceLastAccess > 24.00000) {
                                 await unlockAccountBasedOnElapsedTimeLimit(tokenPreAccessChecks, user)
                             }
-                            logger.info('checking if account is disabled ')
+                            logger.info('signin - checking if account is disabled ')
                             if (!user.accountState.disabled.isDisabled) {
                                 logger.info('account is not disabled ')
                                 if (tokenPreAccessChecks.isTokenRequestGranted) {
@@ -478,7 +478,7 @@ const buildCaseForTokenAccess = async (user) => {
     }
 
     if (dailyCounter < tierThreshold || dailyCounter === tierThreshold) {
-        logger.info('account is not over the basic limit')
+        logger.info('tokenAccessChecks - account is not over the basic limit')
         tokenPreAccessChecks.meta.durationSinceLastAccess = duration;
     } else if (dailyCounter > tierThreshold) {
         logger.info('account is over the basic limit')
@@ -554,9 +554,58 @@ exports.getUser = async (req, res) => {
                     _id: user._id.toString(),
                     name: user.name,
                     email: user.email,
-                    role: user.role
-                },
-                warning: res.locals.accountStateErrors
+                    role: user.role,
+                    subscriptionPlan: user.subscriptionPlan,
+                    isEmailConfirmed: user.isEmailConfirmed,
+                    lastCheckInTime: user.lastCheckInTime,
+                    registrationDate: user.registrationDate,
+                    profile: user.profile,
+                    tier: user.tier,
+                    accountState: user.accountState
+                }
+            })
+        }
+    } catch (error) {
+        res.status(500);
+        res.json({
+            message: ResponseTypes.ERROR["500"]
+        })
+    }
+
+}
+
+/**
+ *
+ * @param req
+ * @param res
+ * @returns {Promise<void>}
+ */
+exports.unlock = async (req, res) => {
+    try {
+        let user;
+        const email = req.body.email;
+        user = await User.findOne({}).byEmail(email);
+        if (user === null) {
+            res.status(401);
+            res.json({
+                description: ResponseTypes.ERROR.MESSAGES.USER_NOT_FOUND
+            })
+        } else {
+            logger.info(`checking if ${user.email} is locked`)
+            if (user.accountState.disabled.isDisabled === true){
+                logger.info(`${user.email} is locked due to ${user.accountState.disabled.reasons[0].code}`)
+                logger.info('setting isDisabled = true')
+                user.accountState.disabled.isDisabled = false
+                logger.info('setting reasons = []')
+                user.accountState.disabled.reasons = []
+                logger.info('resetting daily counter to 0')
+                user.dailyCounter = 0
+                await user.save()
+                logger.info('account unlocked successfully')
+            }
+            res.status(200);
+            res.json({
+                message: 'Completed',
             })
         }
     } catch (error) {

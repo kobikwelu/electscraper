@@ -29,6 +29,10 @@ router.get('/activateAccount/:uuid',[checkJwt, checkAccountStatus], authControll
 router.get('/myuser', [checkJwt, checkAccountStatus], authController.getUser);
 
 
+/**
+ *  ***************************************** GET*************************************
+ */
+router.patch('/unlock',  authController.unlock);
 
 /**
  * *********************************PATCH*************************************
