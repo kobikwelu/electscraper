@@ -74,7 +74,6 @@ const getCurrentTimeV2 = async () => {
 exports.verifyToken = async (token, key, origin) => {
     try {
         const decodedPayload = await jwt.decode(token, await getSigningKey('private'), false, 'HS512')
-        logger.info('decoded token ' + decodedPayload)
         if (await isTokenValid(decodedPayload.expiresAt)) {
             if (await isTrustedSource(decodedPayload.issuer, origin)) {
                 if (await isSameUser(decodedPayload.email, key)) {
@@ -89,8 +88,12 @@ exports.verifyToken = async (token, key, origin) => {
             return ResponseTypes.ERROR.MESSAGES.EXPIRED_TOKEN
         }
     } catch (error) {
-        console.log(error);
-        return ResponseTypes.ERROR["500"]
+        logger.info(error)
+        if (error.message === 'Signature verification failed'){
+            return ResponseTypes.ERROR["400"]
+        } else{
+            return ResponseTypes.ERROR["500"]
+        }
     }
 }
 
@@ -323,18 +326,18 @@ exports.signIn = async (req, res) => {
                         description: ResponseTypes.ERROR.MESSAGES.INVALID_CREDENTIALS
                     })
                 } else {
-                    let tokenPreAccessChecks = await buildCaseForTokenAccess(user)
+                    let tokenPreAccessChecks = await this.buildCaseForAccess(user)
                     if (rulesReportArray.length === 0) {
                         logger.info('')
                         const doesMatch = await bcrypt.compare(password, user.password);
                         if (doesMatch) {
                             if (tokenPreAccessChecks.meta.durationSinceLastAccess > 24.00000) {
-                                await unlockAccountBasedOnElapsedTimeLimit(tokenPreAccessChecks, user)
+                                await this.unlockAccountBasedOnElapsedTimeLimit(tokenPreAccessChecks, user)
                             }
                             logger.info('signin - checking if account is disabled ')
                             if (!user.accountState.disabled.isDisabled) {
                                 logger.info('account is not disabled ')
-                                if (tokenPreAccessChecks.isTokenRequestGranted) {
+                                if (tokenPreAccessChecks.isRequestGranted) {
                                     logger.info('token request is granted')
                                     user.lastCheckInTime = new Date();
                                     user.markModified('lastCheckInTime');
@@ -363,7 +366,7 @@ exports.signIn = async (req, res) => {
                                     res.json({
                                         message: ResponseTypes.SUCCESS["200"],
                                         businessError: {
-                                            tokenAccess: tokenPreAccessChecks.isTokenRequestGranted,
+                                            tokenAccess: tokenPreAccessChecks.isRequestGranted,
                                             accountState: tokenPreAccessChecks.meta.accountState,
                                             message: tokenPreAccessChecks.meta.message
                                         }
@@ -433,7 +436,7 @@ exports.signIn = async (req, res) => {
     }
 }
 
-const unlockAccountBasedOnElapsedTimeLimit = async (tokenPreAccessChecks, user) => {
+exports.unlockAccountBasedOnElapsedTimeLimit = async (tokenPreAccessChecks, user) => {
     logger.info('checking if the account should be unlocked ')
     user.dailyCounter = 0
     user.accountState.disabled.isDisabled = false
@@ -443,14 +446,14 @@ const unlockAccountBasedOnElapsedTimeLimit = async (tokenPreAccessChecks, user) 
     tokenPreAccessChecks.meta.accountState = ''
     tokenPreAccessChecks.meta.disableReason.code = '';
     tokenPreAccessChecks.meta.disableReason.description = '';
-    tokenPreAccessChecks.isTokenRequestGranted = true
+    tokenPreAccessChecks.isRequestGranted = true
     logger.info('updating tokenPreAccessCheck to reflect latest state of token access')
 }
 
 
-const buildCaseForTokenAccess = async (user) => {
+exports.buildCaseForAccess = async (user) => {
     let tokenPreAccessChecks = {
-        isTokenRequestGranted: true,
+        isRequestGranted: true,
         meta: {
             accountState: '',
             message: '',
@@ -478,7 +481,7 @@ const buildCaseForTokenAccess = async (user) => {
     }
 
     if (dailyCounter < tierThreshold || dailyCounter === tierThreshold) {
-        logger.info('tokenAccessChecks - account is not over the basic limit')
+        logger.info('accessChecks - account is not over the basic limit')
         tokenPreAccessChecks.meta.durationSinceLastAccess = duration;
     } else if (dailyCounter > tierThreshold) {
         logger.info('account is over the basic limit')
@@ -489,7 +492,7 @@ const buildCaseForTokenAccess = async (user) => {
             tokenPreAccessChecks.meta.durationSinceLastAccess = duration;
             tokenPreAccessChecks.meta.disableReason.code = 'ACCOUNT_LIMIT';
             tokenPreAccessChecks.meta.disableReason.description = 'Account limit exceeded';
-            tokenPreAccessChecks.isTokenRequestGranted = false
+            tokenPreAccessChecks.isRequestGranted = false
             if (tier === AccountTierTypes.BASIC_UNREGISTERED) {
                 tokenPreAccessChecks.meta.message = 'please activate your account to continue access'
             } else {
@@ -592,9 +595,9 @@ exports.unlock = async (req, res) => {
             })
         } else {
             logger.info(`checking if ${user.email} is locked`)
-            if (user.accountState.disabled.isDisabled === true){
+            if (user.accountState.disabled.isDisabled === true) {
                 logger.info(`${user.email} is locked due to ${user.accountState.disabled.reasons[0].code}`)
-                logger.info('setting isDisabled = true')
+                logger.info('setting isDisabled = false')
                 user.accountState.disabled.isDisabled = false
                 logger.info('setting reasons = []')
                 user.accountState.disabled.reasons = []
@@ -615,6 +618,23 @@ exports.unlock = async (req, res) => {
         })
     }
 
+}
+
+
+/**
+ * Internal methods
+ * @param user
+ * @param reason
+ * @returns {Promise<void>}
+ */
+exports.lock = async (user, reason) => {
+    logger.info(`starting locking process fpr ${user.email}`)
+    logger.info('setting isDisabled = true')
+    user.accountState.disabled.isDisabled = true
+    logger.info('setting reasons = true')
+    user.accountState.disabled.reasons = reason
+    await user.save()
+    logger.info('account locked complete')
 }
 
 /**

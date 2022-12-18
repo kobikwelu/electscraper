@@ -10,12 +10,12 @@ const { votingResultController }  = require('../../../controllers');
 const  electionCache   = require('../../../middlewares/electionCache')
 const  { checkJwt }   = require('../../../middlewares/checkJwt')
 const  { checkAccountStatus }   = require('../../../middlewares/checkAccountStatus')
-
+const  { chargePerRequest }   = require('../../../middlewares/chargePerRequest')
 /*
 * *********************************POST*****************************************
 */
 
-router.get('/', [checkJwt, checkAccountStatus], votingResultController.getVotingResultPerGEO);
+router.get('/', [checkJwt, checkAccountStatus, chargePerRequest], votingResultController.getVotingResultPerGEO);
 
 
 module.exports = router;

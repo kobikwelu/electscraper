@@ -10,11 +10,12 @@ const { votingResultController }  = require('../../../controllers');
 const  electionCache   = require('../../../middlewares/electionCache')
 const  { checkJwt }   = require('../../../middlewares/checkJwt')
 const  { checkAccountStatus }   = require('../../../middlewares/checkAccountStatus')
+const  { chargePerRequest }   = require('../../../middlewares/chargePerRequest')
 /*
 * *********************************GET*****************************************
 */
 
-router.get('/', [checkJwt, checkAccountStatus], votingResultController.getVotingResultPerPU);
+router.get('/', [checkJwt, checkAccountStatus, chargePerRequest], votingResultController.getVotingResultPerPU);
 
 
 module.exports = router;

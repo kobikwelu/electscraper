@@ -8,6 +8,7 @@ const router = express.Router();
 const { checkJwt } = require('../../../middlewares/checkJwt');
 const { checkAccountStatus } = require('../../../middlewares/checkAccountStatus');
 const { authController }  = require('../../../controllers');
+const  { chargePerRequest }   = require('../../../middlewares/chargePerRequest')
 
 /**
  * *********************************POST*****************************************
@@ -17,7 +18,7 @@ router.post('/register', authController.signUp);
 router.post('/login', authController.signIn);
 
 
-router.get('/activateAccount/:uuid',[checkJwt, checkAccountStatus], authController.verifyActivationEmail);
+router.get('/activateAccount/:uuid',[checkJwt], authController.verifyActivationEmail);
 
 //router.post('/resetPassword/sendEmail', authController.nonAuthResetPasswordRequest);
 //router.post('/resetPassword/passwordGate', authController.nonAuthResetPasswordPriorToLogin);

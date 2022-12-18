@@ -10,12 +10,13 @@ const { electionResultController }  = require('../../../controllers');
 const  electionCache   = require('../../../middlewares/electionCache')
 const  { checkJwt }   = require('../../../middlewares/checkJwt')
 const  { checkAccountStatus }   = require('../../../middlewares/checkAccountStatus')
+const  { chargePerRequest }   = require('../../../middlewares/chargePerRequest')
 
 /*
 * *********************************POST*****************************************
 */
 
-router.get('/', [checkJwt, checkAccountStatus, electionCache.getCachedElectionData], electionResultController.getElectionResult);
+router.get('/', [checkJwt, checkAccountStatus, chargePerRequest, electionCache.getCachedElectionData], electionResultController.getElectionResult);
 
 router.post('/',   [electionCache.preInsertCacheCheck], electionResultController.insertElectionResult);
 
