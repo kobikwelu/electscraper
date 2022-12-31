@@ -64,5 +64,6 @@
     "mocha": "^6.1.4",
     "nodemon": "2.0.20",
     "supertest": "^3.4.2"
-  }
+  },
+  "packageManager": "yarn@3.3.1"
 }
