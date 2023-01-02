@@ -8,6 +8,7 @@ const lgaController = require('./lgaController');
 const stateController = require('./stateController');
 const districtController = require('./districtController');
 const authController = require('./authController');
+const electionNameController = require('./electionNameController');
 
 
 module.exports = {
@@ -18,5 +19,6 @@ module.exports = {
     lgaController,
     stateController,
     districtController,
-    authController
+    authController,
+    electionNameController
 }

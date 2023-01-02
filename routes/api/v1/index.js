@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const electionResultRouter = require('./electionResult');
+const electionNameRouter = require('./electionName');
 const votingResultPerPURouter = require('./votingResultPerPU');
 const votingResultPerGEORouter = require('./votingResultPerGEO');
 const pollingUnitRouter = require('./pollingUnit');
@@ -24,6 +25,7 @@ router.use('/electionResult', electionResultRouter);
 router.use('/votingResultPerPU', votingResultPerPURouter);
 router.use('/votingResultPerGEO', votingResultPerGEORouter);
 router.use('/pollingUnit', pollingUnitRouter);
+router.use('/electionName', electionNameRouter);
 
 router.use('/ward', wardRouter);
 router.use('/lga', lgaRouter);
