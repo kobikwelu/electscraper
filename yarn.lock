@@ -3828,7 +3828,7 @@ __metadata:
     pino: ^8.7.0
     pino-pretty: ^9.1.1
     pm2: ^5.2.2
-    redis: ^4.4.0
+    redis: 4.5.1
     supertest: ^3.4.2
     twitter-lite: ^1.1.0
     url: ^0.11.0
@@ -4746,14 +4746,14 @@ __metadata:
   linkType: hard
 
 "readable-stream@npm:^4.0.0":
-  version: 4.2.0
-  resolution: "readable-stream@npm:4.2.0"
+  version: 4.3.0
+  resolution: "readable-stream@npm:4.3.0"
   dependencies:
     abort-controller: ^3.0.0
     buffer: ^6.0.3
     events: ^3.3.0
     process: ^0.11.10
-  checksum: aa8447f781e6df90af78f6b0b9b9a77da2816dcf6c8220e7021c4de36e04f8129fed7ead81eac0baad2f42098209f9e7d7cd43169e1c156efcd2613828a37439
+  checksum: 5f8d5fc1eb0c6eb47771ad4537881126d6280666e1f10ba1e2262a670a0352c36f59e6a04d17c9a6f7c888218984836dc67f55e95a77de8bfdf06fb75f00f670
   languageName: node
   linkType: hard
 
@@ -4773,7 +4773,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redis@npm:^4.4.0":
+"redis@npm:4.5.1":
   version: 4.5.1
   resolution: "redis@npm:4.5.1"
   dependencies:
