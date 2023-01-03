@@ -25,7 +25,7 @@ exports.createClient = async () => {
                     tls: false,
                     rejectUnauthorized: false,
                     keepAlive: 10000,
-                    connectTimeoutMS: 50000,
+                    connectTimeoutMS: false,
                     reconnectStrategy: (retries=>{
                         Math.min(retries * 50, 500)
                     })
