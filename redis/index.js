@@ -21,11 +21,13 @@ exports.createClient = async () => {
             logger.info(`connection string ${getConnectionString()}`)
             redisClient = await redis.createClient({
                 url: getConnectionString(),
+                lazyConnect: true,
+                showFriendlyErrorStack: true,
                 socket: {
                     tls: false,
                     rejectUnauthorized: false,
                     keepAlive: 10000,
-                    connectTimeoutMS: false,
+                    connectTimeoutMS: 50000,
                     reconnectStrategy: (retries=>{
                         Math.min(retries * 50, 500)
                     })
@@ -43,7 +45,6 @@ exports.createClient = async () => {
                 logger.error(`Error : ${error}`)
             });
         }
-
         await redisClient.connect()
         logger.info('***** Connected to redis client .....')
         if (redisClient) {
