@@ -45,6 +45,28 @@ const preInsertCacheCheck = async (req, res, next) => {
     }
 }
 
+const getCachedElectionNames = async (req, res, next) => {
+    const {election_group} = req.body
+    let cachedElectionData
+    try {
+        const cacheResults = await redisClient.get(election_group);
+        if (cacheResults) {
+            cachedElectionData = JSON.parse(cacheResults);
+            logger.info(`pulling data from the election cache`)
+            res.status(200)
+            res.send({
+                result: cachedElectionData
+            })
+        } else {
+            logger.info('item not in election bucket cache')
+            next();
+        }
+    } catch (error) {
+        logger.warn(error)
+        logger.warn('error in election cache bucket. Skipping')
+        next();
+    }
+}
 
 
-module.exports = {getCachedElectionData, preInsertCacheCheck}
+module.exports = {getCachedElectionData, preInsertCacheCheck, getCachedElectionNames}

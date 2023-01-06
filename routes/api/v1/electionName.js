@@ -13,6 +13,6 @@ const  { chargePerRequest }   = require('../../../middlewares/chargePerRequest')
 * *********************************GET*****************************************
 */
 
-router.get('/', [checkJwt, checkAccountStatus, chargePerRequest], electionNameController.getElectionName);
+router.get('/', [checkJwt, checkAccountStatus, chargePerRequest, electionCache.getCachedElectionNames], electionNameController.getElectionName);
 
 module.exports = router;

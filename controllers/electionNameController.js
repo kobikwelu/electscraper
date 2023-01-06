@@ -11,6 +11,11 @@ exports.getElectionName = async (req, res) => {
                     "$regex": '^' + election_group
                 }
             })
+            logger.info('writing to cache')
+            await redisClient.set(election_group, JSON.stringify(electionNames), {
+                ex: 120,
+                NX: true
+            })
             logger.info('returning election names')
             res.status(200)
             res.json({
