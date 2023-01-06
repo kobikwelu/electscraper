@@ -65,8 +65,10 @@ exports.createClient = async () => {
         redisClient.on('error', async (error) => {
             // Log the error
             logger.error(`Error : ${error}`)
-            // Attempt to reconnect to the Redis instance
-             await redisClient.connect();
+            if (!state.connected) {
+                // Attempt to reconnect to the Redis instance
+                await redisClient.connect();
+            }
         });
 
         return redisClient
