@@ -61,6 +61,14 @@ exports.createClient = async () => {
             logger.info('Redis default connection is disconnected due to application termination')
             process.exit(0);
         });
+
+        redisClient.on('error', async (error) => {
+            // Log the error
+            logger.error(`Error : ${error}`)
+            // Attempt to reconnect to the Redis instance
+             await redisClient.connect();
+        });
+
         return redisClient
     } catch (error) {
         logger.error(`REDIS Error : ${error}`)
