@@ -32,9 +32,9 @@ const genToken = async (role, username, email) => {
     let origin
     logger.info('gen token starts')
     if (process.env.NODE_ENV === 'production') {
-        origin = `${keys.Origin_backend}`;
+        origin = `${keys.Origin_frontend}`;
     } else {
-        origin = "http://localhost:8080"
+        origin = "http://localhost:3000"
     }
     let expiresAt = await expiresInV3(1440);
     let issuedAt = await getCurrentTimeV2();

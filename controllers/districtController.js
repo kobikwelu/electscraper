@@ -5,7 +5,7 @@ const lodash = require("lodash")
 
 
 exports.getDistrict = async (req, res) => {
-    const {state} = req.body
+    const {state, election_name} = req.body
 
     let result = {
         governor:{},
@@ -14,7 +14,7 @@ exports.getDistrict = async (req, res) => {
         stateHouseOfAssembly: {}
     }
 
-    if (state) {
+    if (state && election_name) {
         try {
             let returnedSenatorialDistricts = await Senatorial.find({
                 state: state
@@ -45,6 +45,7 @@ exports.getDistrict = async (req, res) => {
 
             let governorShipCandidates = await Candidate.find({
                 state: state,
+                election_name: election_name,
                 "$or" : [{
                     position: 'Governorship'
                 }, {
