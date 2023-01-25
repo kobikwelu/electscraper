@@ -32,7 +32,9 @@ const genToken = async (role, username, email) => {
     let origin
     logger.info('gen token starts')
     if (process.env.NODE_ENV === 'production') {
-        origin = `${keys.Origin_frontend}`;
+        //TODO - Temporal bridge to allow for remote development
+        //origin = `${keys.Origin_frontend}`;
+        origin = "http://localhost:3000"
     } else {
         origin = "http://localhost:3000"
     }
