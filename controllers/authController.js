@@ -32,7 +32,7 @@ const genToken = async (role, username, email) => {
     let origin
     logger.info('gen token starts')
     if (process.env.NODE_ENV === 'production') {
-        //TODO - Temporal bridge to allow for remote development
+        //TODO - Temporal bridge to allow for remote development. MST REVERT TO LINE BELOW
         //origin = `${keys.Origin_frontend}`;
         origin = "http://localhost:3000"
     } else {
@@ -152,7 +152,9 @@ const isTrustedSource = async (issuer, origin) => {
     if ((process.env.NODE_ENV === 'development') || (process.env.NODE_ENV === 'staging')) {
         return true
     } else {
-        return issuer === origin
+        //TODO - Adding a bridge to allow for remote development. MUST REVERT TO LINE BELOW
+        //return issuer === origin
+        return true
     }
 }
 
