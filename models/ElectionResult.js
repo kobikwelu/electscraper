@@ -1,22 +1,20 @@
-
 const mongoose = require('mongoose');
 const db = require('../dbConnect').get();
 
-
-
-const electionResultSchema = new mongoose.Schema({
+const pollingUnitResultSchema = new mongoose.Schema({
     pollingUnit_Country: String,
     pollingUnit_State: String,
     pollingUnit_LGA: String,
+    pollingUnit_ward: String,
     pollingUnit_name: String,
     pollingUnit_Code: String,
     election_name: String,
     meta: {
         result_sheet_meta: {
-            resultSheet_State_Code: Number,
-            resultSheet_LGA_Code: Number,
-            resultSheet_RegistrationArea_Code: Number,
-            resultSheet_PollingUnit_Code: Number,
+            resultSheet_State_Code: String,
+            resultSheet_LGA_Code: String,
+            resultSheet_RegistrationArea_Code: String,
+            resultSheet_PollingUnit_Code: String,
             resultSheet_RegisteredVoters: Number,
             resultSheet_IssuedBallotPapers: Number,
             resultSheet_UnusedBallotPapers: Number,
@@ -27,11 +25,9 @@ const electionResultSchema = new mongoose.Schema({
         },
         party_Votes :[
             {
-                partyId:{
-                    type:mongoose.Schema.Types.ObjectId,
-                    ref: 'PartyResult',
-                    required: false
-                }
+                partyName: String,
+                partyAcronym: String,
+                votes: Number
             }
         ]
     },
@@ -39,7 +35,7 @@ const electionResultSchema = new mongoose.Schema({
 });
 
 
+const PollingUnitResultSchema = db.model('PollingUnitResult', pollingUnitResultSchema);
 
-const ElectionResultSchema = db.model('ElectionResult', electionResultSchema);
 
-module.exports = ElectionResultSchema;
+module.exports = PollingUnitResultSchema;
