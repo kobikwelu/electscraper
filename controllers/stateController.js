@@ -1,4 +1,4 @@
-const ElectionResult = require("../models/ElectionResult");
+const ElectionResult = require("../models/PollingUnitResult");
 const PartyResult = require("../models/PartyResult");
 const PollingUnit = require("../models/PollingUnit");
 let lodash = require('lodash')

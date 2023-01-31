@@ -165,6 +165,8 @@ const isTrustedSource = async (issuer, origin) => {
  * @returns {Promise<boolean>}
  */
 const isSameUser = async (email, key) => {
+    logger.info('email is ' + email)
+    logger.info('key is ' + key)
     return email === key
 }
 
