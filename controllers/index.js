@@ -9,7 +9,7 @@ const stateController = require('./stateController');
 const districtController = require('./districtController');
 const authController = require('./authController');
 const electionNameController = require('./electionNameController');
-
+const collationController = require('./collationController');
 
 module.exports = {
     electionResultController,
@@ -20,5 +20,6 @@ module.exports = {
     stateController,
     districtController,
     authController,
-    electionNameController
+    electionNameController,
+    collationController
 }

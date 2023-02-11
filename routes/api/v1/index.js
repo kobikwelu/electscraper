@@ -9,6 +9,7 @@ const pollingUnitRouter = require('./pollingUnit');
 const wardRouter = require('./ward');
 const lgaRouter = require('./lga');
 const stateRouter = require('./state');
+const collationRouter = require('./collation');
 
 const districtRouter = require('./district');
 
@@ -26,6 +27,7 @@ router.use('/votingResultPerPU', votingResultPerPURouter);
 router.use('/votingResultPerGEO', votingResultPerGEORouter);
 router.use('/pollingUnit', pollingUnitRouter);
 router.use('/electionName', electionNameRouter);
+router.use('/collation', collationRouter);
 
 router.use('/ward', wardRouter);
 router.use('/lga', lgaRouter);
