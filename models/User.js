@@ -48,6 +48,14 @@ const userSchema = new mongoose.Schema({
             type: String,
             default: ''
         },
+        isNewAdvisoryNeeded: {
+            type: Boolean,
+            default: true,
+        },
+        financialQuestionnaires: [{
+                question: { type: String, required: true },
+                answer: { type: String, required: true },
+            }],
         comments: [{
             text: String,
             images: [""],

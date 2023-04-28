@@ -7,6 +7,7 @@ const ResponseTypes = require('../constants/ResponseTypes');
 const AccountTierTypes = require('../constants/AccountTierTypes');
 const configs = require(`../config/env/${process.env.NODE_ENV}`);
 const config = require("../config");
+const fs = require('fs');
 const {
     basic_unregistered: basic_unregistered,
     basic_registered: basic_registered,
@@ -21,7 +22,7 @@ const {authBusinessRules} = require('../businessRules')
 const notificationController = require('../controllers/notificationController');
 
 const keys = require('../config');
-const fs = require('fs');
+
 
 
 const SALT_ROUNDS = 10;
@@ -234,10 +235,10 @@ const deleteUser = async (email) => {
  * @returns {Promise<void>}
  */
 exports.signUp = async (req, res) => {
-    const {email, role, password, name} = req.body;
+    const {email, role, password, name, financialQuestionnaires} = req.body;
     const unHashedPassword = password;
 
-    if (email && role && unHashedPassword && name) {
+    if (email && role && unHashedPassword && name && financialQuestionnaires) {
         let user = null;
         try {
             const count = await User.countDocuments({email});
@@ -249,11 +250,22 @@ exports.signUp = async (req, res) => {
                 })
             } else {
                 const password = await bcrypt.hash(unHashedPassword, SALT_ROUNDS);
+                let profile = {
+                    address: null,
+                    zipcode: null,
+                    phoneNumber: null,
+                    profileImageUrl: null,
+                    bioInfo: null,
+                    dateOfBirth: null,
+                    financialQuestionnaires: financialQuestionnaires,
+                    comments: []
+                }
                 user = await User.create({
                     email,
                     password,
                     name,
                     role,
+                    profile,
                     tier: 'BASIC_UNREGISTERED',
                     emailActivationToken: uuid(),
                     emailActivationTokenExpiryDate: await expiresInV3(2880)
@@ -340,7 +352,7 @@ exports.signIn = async (req, res) => {
                             if (tokenPreAccessChecks.meta.durationSinceLastAccess > 24.00000) {
                                 await this.unlockAccountBasedOnElapsedTimeLimit(tokenPreAccessChecks, user)
                             }
-                            logger.info('signin - checking if account is disabled ')
+                            logger.info('sign in - checking if account is disabled ')
                             if (!user.accountState.disabled.isDisabled) {
                                 logger.info('account is not disabled ')
                                 if (tokenPreAccessChecks.isRequestGranted) {
@@ -455,7 +467,6 @@ exports.unlockAccountBasedOnElapsedTimeLimit = async (tokenPreAccessChecks, user
     tokenPreAccessChecks.isRequestGranted = true
     logger.info('updating tokenPreAccessCheck to reflect latest state of token access')
 }
-
 
 exports.buildCaseForAccess = async (user) => {
     let tokenPreAccessChecks = {
@@ -660,15 +671,18 @@ exports.lock = async (user, reason) => {
 exports.updateUser = async (req, res) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
     let user = null;
+    let purgeAdvisoryCache = false
     const allowedKeys = [
         'name',
         'profileImageUrl',
         'bioInfo',
         'address',
-        'tier'
+        'tier',
+        'financialQuestionnaires',
+        'isNewAdvisoryNeeded'
     ];
     try {
-        user = await User.findOne({key});
+        const user = await User.findOne({}).byEmail(key);
         if (!user) {
             res.status(401);
             res.json({
@@ -680,12 +694,27 @@ exports.updateUser = async (req, res) => {
                     if (typeof user[key] !== 'undefined') {
                         user[key] = value;
                     } else if (typeof user.profile[key] !== 'undefined') {
+                        if (user.profile[key] === 'isNewAdvisoryNeeded') {
+                            purgeAdvisoryCache = true
+                            //TODO - Future enhancement -The goal is to have a new chatgpt request sent offline
+                            //This should be sent to a message queue for processing. Once completed
+                            //Update the flag to false and send a notification.
+                            //For now, we will defer and request new chat request on demand when the recommendation endpoint is called
+                        }
                         user.profile[key] = value;
                     }
                 }
             });
         }
+        logger.info('saving profile changes in sor')
         await user.save();
+        logger.info('profile successfully updated')
+        if (purgeAdvisoryCache){
+            logger.info('new profile update was requested with new questionnaires')
+            logger.info('purging cache of old advisory')
+            await redisClient.del(key)
+            logger.info('purging completed')
+        }
         res.status(200);
         res.json({
             description: ResponseTypes.SUCCESS["200"]

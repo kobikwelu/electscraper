@@ -10,6 +10,7 @@ const wardRouter = require('./ward');
 const lgaRouter = require('./lga');
 const stateRouter = require('./state');
 const collationRouter = require('./collation');
+const recommendationRouter = require('./recommendation');
 
 const districtRouter = require('./district');
 
@@ -37,5 +38,7 @@ router.use('/state', stateRouter);
 router.use('/district', districtRouter);
 
 router.use('/user', userRouter)
+
+router.use('/recommendation', recommendationRouter)
 
 module.exports = router;

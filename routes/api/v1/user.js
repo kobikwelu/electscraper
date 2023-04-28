@@ -39,7 +39,7 @@ router.patch('/unlock',  authController.unlock);
  * *********************************PATCH*************************************
  */
 
-router.patch('/', [checkJwt, checkAccountStatus], authController.updateUser);
+router.patch('/myuser', [checkJwt, checkAccountStatus], authController.updateUser);
 
 
 module.exports = router;

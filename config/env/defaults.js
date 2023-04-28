@@ -43,6 +43,9 @@ const config = {
     basic_registered: process.env.ACCOUNT_TIER_BASIC_REGISTERED,
     team: process.env.ACCOUNT_TIER_TEAM,
     enterprise: process.env.ACCOUNT_TIER_ENTERPRISE
+  },
+  openAi: {
+    API_KEY: process.env.OPENAI_API_KEY
   }
 };
 
