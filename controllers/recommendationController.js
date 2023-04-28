@@ -25,7 +25,7 @@ exports.recommendation = async (req, res) => {
                     },
                     {
                         role: "user",
-                        content: `Carefully analyze my needs by analyzing my preferences against the list of financial products which I provided you. Ensure that you provide a brief recommendation of 2 products which helps the user (Financial analysis), how each product compliments the other products on your list. At the end, list all the recommended 
+                        content: `Carefully analyze my needs by analyzing my preferences against the list of financial products which I provided you. Ensure that you provide a brief recommendation of 3 products which helps the user (Financial analysis), how each product compliments the other products on your list. At the end, list all the recommended 
                         products you selected in this format inbound_sign_in_url, business_website, outbound_business_app, about, logo and business keywords in an array format.`,
                     },
                 ];
@@ -84,7 +84,7 @@ const getFinancialAdvice = async (messages) => {
     try {
         const payload = {
             messages: messages,
-            max_tokens: 400,
+            max_tokens: 600,
             n: 1,
             model: 'gpt-3.5-turbo',
             temperature: 0.2,
@@ -98,7 +98,6 @@ const getFinancialAdvice = async (messages) => {
         };
 
         const response = await axios.post(API_URL, payload, requestOptions);
-        console.log (response.data.choices[0].message.content)
         return response.data.choices[0].message.content.trim();
     } catch (error) {
         logger.info(error)
