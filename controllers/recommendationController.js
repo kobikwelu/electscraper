@@ -25,7 +25,8 @@ exports.recommendation = async (req, res) => {
                     },
                     {
                         role: "user",
-                        content: `Carefully analyze my needs by analyzing my preferences against the list of financial products which I provided you. Ensure that you provide a brief recommendation of 3 products which helps the user (Financial analysis), how each product compliments the other products on your list. At the end, list all the recommended 
+                        content: `Carefully analyze my needs by analyzing my preferences against the list of financial products which I provided you. 
+                        Ensure that you provide a brief recommendation of 3 products which helps the user (Financial analysis), how each product compliments the other products on your list. At the end, list all the recommended 
                         products you selected in this format inbound_sign_in_url, business_website, outbound_business_app, about, logo and business keywords in an array format.`,
                     },
                 ];
@@ -34,7 +35,8 @@ exports.recommendation = async (req, res) => {
                 if (result) {
                     logger.info('advisory created ')
                     logger.info('saving to cache')
-                    await redisClient.set(email, JSON.stringify(result), {
+                    let advisoryCacheString = email + 'chatgptadvisory'
+                    await redisClient.set(advisoryCacheString, JSON.stringify(result), {
                         ex: 120,
                         NX: true
                     })
@@ -61,7 +63,8 @@ exports.recommendation = async (req, res) => {
             }
         } else {
             logger.info(' item already exists. Lets retrieve from cache')
-            const cacheResults = await redisClient.get(email);
+            let advisoryCacheString = email + 'chatgptadvisory'
+            const cacheResults = await redisClient.get(advisoryCacheString);
             if (cacheResults) {
                 let results = JSON.parse(cacheResults);
                 logger.info(`pulling item from the advisory cache`)
@@ -87,7 +90,7 @@ const getFinancialAdvice = async (messages) => {
             max_tokens: 600,
             n: 1,
             model: 'gpt-3.5-turbo',
-            temperature: 0.2,
+            temperature: 0.1,
         };
 
         const requestOptions = {
@@ -104,34 +107,13 @@ const getFinancialAdvice = async (messages) => {
     }
 };
 
-/*
 const primeResponse = async (advice) => {
     try {
         const indexOfOpeningBracket = advice.indexOf('[');
-        const indexOfClosingBracket = advice.indexOf(']');
+        const indexOfClosingBracket = advice.lastIndexOf(']');
         const advisory = advice.slice(0, indexOfOpeningBracket);
-        const rawProducts = advice.slice(indexOfOpeningBracket + 1, indexOfClosingBracket);
+        const rawProducts = advice.slice(indexOfOpeningBracket, indexOfClosingBracket + 1);
 
-        let cleanedProducts = rawProducts.replace(/\\r\\n/g, " ").replace(/\\n/g, " ");
-
-        const productsList = JSON.parse("[" + cleanedProducts.split("},\n{").join("},{") + "]");
-
-        return {advisory, productsList};
-    } catch (error) {
-        return null
-    }
-}
-*/
-
-
-const primeResponse = async (advice) => {
-    try {
-        const indexOfOpeningBracket = advice.indexOf('[');
-        const indexOfClosingBracket = advice.lastIndexOf(']'); // Changed to lastIndexOf to avoid issues if there are more brackets
-        const advisory = advice.slice(0, indexOfOpeningBracket);
-        const rawProducts = advice.slice(indexOfOpeningBracket, indexOfClosingBracket + 1); // Include the closing bracket
-
-        // Removed unnecessary cleaning, as the provided JSON is already valid
         const productsList = JSON.parse(rawProducts);
 
         return {advisory, productsList};

@@ -662,6 +662,7 @@ exports.lock = async (user, reason) => {
  *!
  **/
 
+
 /**
  *  tier - must be one of the following TEAM | ENTERPRISE
  * @param req
@@ -670,7 +671,6 @@ exports.lock = async (user, reason) => {
  */
 exports.updateUser = async (req, res) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
-    let user = null;
     let purgeAdvisoryCache = false
     const allowedKeys = [
         'name',
@@ -689,12 +689,13 @@ exports.updateUser = async (req, res) => {
                 description: ResponseTypes.ERROR.MESSAGES.USER_NOT_FOUND
             })
         } else {
+
             Object.entries(req.body).forEach(([key, value]) => {
                 if (allowedKeys.includes(key)) {
                     if (typeof user[key] !== 'undefined') {
                         user[key] = value;
                     } else if (typeof user.profile[key] !== 'undefined') {
-                        if (user.profile[key] === 'isNewAdvisoryNeeded') {
+                        if (user.profile[key]) {
                             purgeAdvisoryCache = true
                             //TODO - Future enhancement -The goal is to have a new chatgpt request sent offline
                             //This should be sent to a message queue for processing. Once completed
@@ -712,7 +713,8 @@ exports.updateUser = async (req, res) => {
         if (purgeAdvisoryCache){
             logger.info('new profile update was requested with new questionnaires')
             logger.info('purging cache of old advisory')
-            await redisClient.del(key)
+            let advisoryCacheString = key + 'chatgptadvisory'
+            await redisClient.del(advisoryCacheString)
             logger.info('purging completed')
         }
         res.status(200);
