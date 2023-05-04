@@ -9,11 +9,12 @@ const config = require("./config");
 const db = require("./dbConnect");
 const redis = require("./redis");
 const cron = require("node-cron");
+
 //const authApi = require('./services/auth0api');
 //const { checkDistricts } = require('./services/civicApi');
 //const taskService = require('./services/taskService');
 
-const { newslettersController, twitterController } = require("./controllers");
+const { recommendationsQueue} = require("./queues");
 const app = express();
 
 /**
@@ -92,6 +93,13 @@ const server = app.listen(app.get("port"), async () => {
     db.connect();
     logger.info("Attempting to connect to redis cache .........");
     global.redisClient = await redis.createClient()
+    async function processRecommendations(user, productsToProcess) {
+        logger.info('------- logger active------')
+        await recommendationsQueue.add({
+            user: user,
+            productsToProcess: productsToProcess
+        });
+    }
     logger.info(
         "###########################################################################################"
     );

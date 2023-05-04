@@ -697,10 +697,6 @@ exports.updateUser = async (req, res) => {
                     } else if (typeof user.profile[key] !== 'undefined') {
                         if (user.profile[key]) {
                             purgeAdvisoryCache = true
-                            //TODO - Future enhancement -The goal is to have a new chatgpt request sent offline
-                            //This should be sent to a message queue for processing. Once completed
-                            //Update the flag to false and send a notification.
-                            //For now, we will defer and request new chat request on demand when the recommendation endpoint is called
                         }
                         user.profile[key] = value;
                     }
