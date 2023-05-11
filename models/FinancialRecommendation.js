@@ -18,14 +18,14 @@ const financialRecommendationSchema = new mongoose.Schema({
     advisoryList:[
         {
             advisory: String,
-            productList: {
+            productsList: [{
                 inbound_sign_in_url: String,
                 business_website: String,
                 outbound_business_app: String,
                 about: String,
                 logo: String,
                 business_keywords:[]
-            }
+            }]
         }
 
     ]

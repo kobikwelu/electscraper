@@ -14,8 +14,9 @@ recommendationsQueue.process(async (job) => {
     logger.info('starting the data reconcillation process')
     let advisorKey = user.email + 'chatgptadvisory'
     let staleAdvisory = await redisClient.get(advisorKey)
-    let advisoryList = await pruneNullContent(recommendationsHaul, staleAdvisory)
+    let advisoryList = await pruneNullContent(recommendationsHaul, JSON.parse(staleAdvisory))
     let topTwoAdvisory = await returnTopTwoAdvisory(advisoryList)
+   //logger.info(JSON.parse(topTwoAdvisory))
     await redisClient.del(advisorKey);
     logger.info('stale advisory successfully deleted')
     await redisClient.set(advisorKey, JSON.stringify(topTwoAdvisory), {
@@ -23,11 +24,14 @@ recommendationsQueue.process(async (job) => {
         NX: true
     })
 
-    //TODO- Fix. Need to insert with email to help recommendation list
     logger.info('new advisory saved to cache successfully')
-    logger.info('--------------- ' + topTwoAdvisory)
-    const advisoryFeedback = await FinancialRecommendation.insertMany(advisoryList)
-    logger.info(`latest advisory saved in tbe db---------- ${advisoryFeedback}`)
+    logger.info('creating final advisory object')
+    const financialRecommendation = await FinancialRecommendation.create({
+        email: user.email,
+        advisoryList: topTwoAdvisory
+    })
+    await financialRecommendation.save()
+    logger.info(`latest advisory saved in tbe db----------`)
     logger.info('completed all processes!')
     return Promise.resolve(recommendationsHaul);
 });
@@ -39,7 +43,7 @@ const pruneNullContent = async (recommendationsHaul, staleAdvisory) => {
 }
 
 const returnTopTwoAdvisory = async (advisory)=>{
-    return advisory.slice(0, 2);
+    return [advisory[advisory.length-1], advisory[0]]
 }
 
 module.exports = recommendationsQueue
