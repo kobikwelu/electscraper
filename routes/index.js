@@ -9,4 +9,8 @@ const v1APIRouter = require('./api/v1');
 
 router.use('/api/v1', v1APIRouter);
 
+router.get('/health', (req, res) => {
+    res.status(200).send('Ok');
+  });
+
 module.exports = router;
