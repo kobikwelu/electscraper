@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "main": "app.js",
   "license": "MIT",
+  "engines": {
+    "yarn": "3.0.0",
+    "node": "16.x.x"
+  },
   "dependencies": {
     "async": "^3.2.0",
     "aws-sdk": "^2.656.0",
     "axios": "^0.20.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
+    "bull": "^4.10.4",
     "cron": "^1.7.1",
     "datejs": "^1.0.0-rc3",
     "dotenv": "^4.0.0",
@@ -37,21 +42,26 @@
     "moment": "^2.27.0",
     "mongoose": "^5.5.12",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-s3": "^3.0.1",
     "node-cache": "^4.2.0",
     "node-cron": "^2.0.3",
     "node-uuid": "^1.4.8",
     "path": "^0.12.7",
     "pino": "^8.7.0",
     "pino-pretty": "^9.1.1",
-    "redis": "^4.4.0",
+    "pm2": "^5.2.2",
+    "redis": "4.5.1",
+    "shutterstock-api": "^1.1.32",
     "twitter-lite": "^1.1.0",
     "url": "^0.11.0",
     "url-parse": "^1.4.7",
+    "util.promisify": "^1.1.2",
     "uuid": "^7.0.3",
     "yarn": "^1.22.19"
   },
   "scripts": {
-    "start": "nodemon app.js | pino-pretty --ignore uploads/",
+    "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node app.js | pino-pretty --ignore uploads/",
     "test": "./node_modules/.bin/mocha --recursive --exit"
   },
   "devDependencies": {
@@ -59,5 +69,6 @@
     "mocha": "^6.1.4",
     "nodemon": "2.0.20",
     "supertest": "^3.4.2"
-  }
+  },
+  "packageManager": "yarn@3.3.1"
 }

@@ -5,15 +5,19 @@ global.logger ??= require('pino')();
 const RateLimit = require("express-rate-limit");
 const device = require("express-device");
 const config = require("./config");
+const {totalWords, maxToken, postKeywords} = config
 
 const db = require("./dbConnect");
 const redis = require("./redis");
 const cron = require("node-cron");
+
+const { contentController } = require('./controllers')
+
 //const authApi = require('./services/auth0api');
 //const { checkDistricts } = require('./services/civicApi');
 //const taskService = require('./services/taskService');
 
-const { newslettersController, twitterController } = require("./controllers");
+const { recommendationsQueue} = require("./queues");
 const app = express();
 
 /**
@@ -66,6 +70,8 @@ app.use((req, res, next) => {
     err.status = 404;
     next(err);
 });
+
+
 // Start the server
 app.set("port", process.env.PORT || 4252);
 
@@ -92,6 +98,13 @@ const server = app.listen(app.get("port"), async () => {
     db.connect();
     logger.info("Attempting to connect to redis cache .........");
     global.redisClient = await redis.createClient()
+    async function processRecommendations(user, productsToProcess) {
+        logger.info('------- logger active------')
+        await recommendationsQueue.add({
+            user: user,
+            productsToProcess: productsToProcess
+        });
+    }
     logger.info(
         "###########################################################################################"
     );
@@ -100,17 +113,19 @@ const server = app.listen(app.get("port"), async () => {
     );
 });
 
-/*
+
 cron.schedule(`${config.cronTime}`, async () => {
-    logger.info("running cron job");
+    logger.info(`generating new posts for today ${Date.now()}`);
     try {
-        await newslettersController.getDailyNewsUpdates();
-        await twitterController.broadcast()
+        let keywords = postKeywords.split(',')
+        for (const keyword of keywords) {
+            await contentController.generatePosts(keyword, maxToken, totalWords, 'unsplash');
+        }
+        logger.info(`completed generating posts`);
     } catch (ex) {
         logger.info(ex);
     }
 });
-*/
 
 
 function errorHandler(err, req, res, next) {

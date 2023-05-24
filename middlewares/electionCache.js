@@ -5,18 +5,18 @@ const getCachedElectionData = async (req, res, next) => {
         const cacheResults = await redisClient.get(pollingUnit_Code);
         if (cacheResults) {
             cachedElectionData = JSON.parse(cacheResults);
-            logger.info(`pulling ${cachedElectionData._id} from the cache`)
+            logger.info(`pulling ${cachedElectionData._id} from the election cache`)
             res.status(200)
             res.send({
                 result: cachedElectionData
             })
         } else {
-            logger.info('item not in cache')
+            logger.info('item not in election bucket cache')
             next();
         }
     } catch (error) {
         logger.warn(error)
-        logger.warn('error in cache bucket. Skipping')
+        logger.warn('error in election cache bucket. Skipping')
         next();
     }
 }
@@ -45,4 +45,28 @@ const preInsertCacheCheck = async (req, res, next) => {
     }
 }
 
-module.exports = {getCachedElectionData, preInsertCacheCheck}
+const getCachedElectionNames = async (req, res, next) => {
+    const {election_group} = req.body
+    let cachedElectionData
+    try {
+        const cacheResults = await redisClient.get(election_group);
+        if (cacheResults) {
+            cachedElectionData = JSON.parse(cacheResults);
+            logger.info(`pulling data from the election cache`)
+            res.status(200)
+            res.send({
+                result: cachedElectionData
+            })
+        } else {
+            logger.info('item not in election bucket cache')
+            next();
+        }
+    } catch (error) {
+        logger.warn(error)
+        logger.warn('error in election cache bucket. Skipping')
+        next();
+    }
+}
+
+
+module.exports = {getCachedElectionData, preInsertCacheCheck, getCachedElectionNames}
