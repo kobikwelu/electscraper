@@ -30,8 +30,10 @@ exports.generatePosts = async (keyword, max_tokens, total_words, imageSource = n
         };
         let post = await getContentFromChatGPT(prompt, max_tokens)
         let processedPostContent = await processContentResponseFromChatGpt(post)
+        logger.info(processedPostContent[0])
+        logger.info(processedPostContent[1])
+        logger.info(processedPostContent[2])
         logger.info(`content for ${keyword} has been provisioned`)
-        logger.info('&&&&& '+ JSON.stringify(processedPostContent[0]))
         let author = 'Tally'
         if (imageSource === 'shuttershock') {
             let s3imageUrlFromShutterStock = await getAndProcessImageFromShutterStock(imageQueryParams)
@@ -43,9 +45,9 @@ exports.generatePosts = async (keyword, max_tokens, total_words, imageSource = n
             image = imageUrlFromUnsplash.data.urls.regular;
             thumbnail = imageUrlFromUnsplash.data.urls.thumb;
         }
-        let postUpdate = await postController.persistPostInDBAndCache(JSON.stringify(processedPostContent[0]),
-            JSON.stringify(processedPostContent[2]), image, thumbnail,
-            JSON.stringify(processedPostContent[1]), author)
+        let postUpdate = await postController.persistPostInDBAndCache(processedPostContent[0],
+            processedPostContent[2], image, thumbnail,
+            processedPostContent[1], author)
         logger.info(`completed saving the automated post for ${keyword}`)
     } catch (error) {
         logger.error(error)
@@ -126,11 +128,10 @@ const getAndProcessImagesFromUnsplash = async (imageQueryParams) => {
 }
 
 const processContentResponseFromChatGpt = async (rawChatResponse) => {
-
     let strippedStringWithNoBraces = rawChatResponse.trim().substring(1, rawChatResponse.length - 2);
     let partsString = strippedStringWithNoBraces.split(/"(title|category|content)": "/);
-    let titleObj = {title: partsString[2].split('",')[0].replace(/[:{}"]/g, '')};
-    let categoryObj = {category: partsString[4].split('",')[0].replace(/[:{}"]/g, '')};
-    let contentObj = {content: partsString[6].split('"\n}')[0].replace(/[:{}"]/g, '')};
-    return [titleObj, categoryObj, contentObj]
+    let titleStr = partsString[2].split('",')[0].replace(/[:{}"]/g, '');
+    let categoryStr = partsString[4].split('",')[0].replace(/[:{}"]/g, '');
+    let contentStr = partsString[6].split('"\n}')[0].replace(/[:{}"]/g, '');
+    return [titleStr, categoryStr, contentStr];
 }
