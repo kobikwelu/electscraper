@@ -28,7 +28,8 @@ recommendationsQueue.process(async (job) => {
     logger.info('creating final advisory object')
     const financialRecommendation = await FinancialRecommendation.create({
         email: user.email,
-        advisoryList: topTwoAdvisory
+        advisoryList: topTwoAdvisory,
+        timestamp: new Date()
     })
     await financialRecommendation.save()
     logger.info(`latest advisory saved in tbe db----------`)

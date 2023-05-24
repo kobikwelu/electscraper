@@ -28,7 +28,8 @@ const financialRecommendationSchema = new mongoose.Schema({
             }]
         }
 
-    ]
+    ],
+    timestamp: Date
 });
 
 financialRecommendationSchema.query.byEmail = function (email) {

@@ -38,6 +38,14 @@ const config = {
     AWS_BUCKET: process.env.AWS_BUCKET,
   },
   cronTime: process.env.CRON_TIME,
+  maxToken: process.env.MAX_TOKEN,
+  totalWords: process.env.TOTAL_WORDS,
+  postKeywords: process.env.POST_KEYWORDS,
+  shutterStock_api_key: process.env.SHUTTERSTOCK_API_TOKEN,
+  unsplash:{
+    access_key: process.env.UNSPLASH_ACCESS_KEY,
+    secret_key: process.env.UMSPLASH_SECRET_KEYS
+  },
   accountTier:{
     basic_unregistered: process.env.ACCOUNT_TIER_BASIC_UNREGISTERED,
     basic_registered: process.env.ACCOUNT_TIER_BASIC_REGISTERED,

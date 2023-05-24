@@ -3,6 +3,7 @@ const axios = require('axios');
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 const User = require('../models/User')
 const FinancialProductGuide = require('../models/FinancialProductGuide')
+const FinancialRecommendation = require('../models/FinancialRecommendation')
 const Bull = require('bull');
 const recommendationsQueue = new Bull('recommendations');
 
@@ -68,6 +69,40 @@ exports.recommendation = async (req, res) => {
                 })
             }
         }
+    } else {
+        res.status(400);
+        res.json({
+            message: "Missing required values"
+        })
+    }
+};
+
+exports.appList = async (req, res) => {
+   const email = req.headers['email']
+
+    if (email) {
+        try {
+            const financialRecommendationsList = await FinancialRecommendation.find({}).byEmail(email).sort({timestamp: -1});
+            let appsHistory = []
+
+            financialRecommendationsList.forEach(recommendation => {
+                recommendation.advisoryList.forEach(advisory => {
+                    appsHistory.push(...advisory.productsList);
+                });
+            });
+
+            res.status(200)
+            res.send({
+                appsHistory
+            })
+        }catch(error){
+            logger.error(error)
+            res.status(500)
+            res.send({
+                message: 'something went wrong'
+            })
+        }
+
     } else {
         res.status(400);
         res.json({
@@ -148,9 +183,9 @@ const batchFinancialProducts = async (model) => {
 
         for (let i = 0; i < numBatches; i++) {
             const records = await model.aggregate([
-                { $match: { _id: { $nin: seenIds } } },
-                { $sample: { size: recordsPerBatch } },
-                { $limit: recordsPerBatch }
+                {$match: {_id: {$nin: seenIds}}},
+                {$sample: {size: recordsPerBatch}},
+                {$limit: recordsPerBatch}
             ]);
 
             records.forEach(record => {
@@ -169,23 +204,23 @@ const batchFinancialProducts = async (model) => {
 
 exports.interactWithChatGPTKnowledgeBase = async (user, productSet) => {
     logger.info('interaction with FinancialRecommendation engine started')
-        const messages = [
-            {
-                role: "system",
-                content: `You are a helpful Financial advisor based in Nigeria (consider all the social, financial and economic nuances of Nigeria and its impact on the average Nigerian) that suggests financial strategies based on a financial set of products/apps listed in this array: ${JSON.stringify(productSet)}`,
-            },
-            {
-                role: "user",
-                content: `A set of questions and answers which should help you get a better understanding of my needs are contained in this array: ${JSON.stringify(user.profile.financialQuestionnaires)}`,
-            },
-            {
-                role: "user",
-                content: `Carefully analyze my needs by analyzing my preferences against the list of financial products which I provided you. 
+    const messages = [
+        {
+            role: "system",
+            content: `You are a helpful Financial advisor based in Nigeria (consider all the social, financial and economic nuances of Nigeria and its impact on the average Nigerian) that suggests financial strategies based on a financial set of products/apps listed in this array: ${JSON.stringify(productSet)}`,
+        },
+        {
+            role: "user",
+            content: `A set of questions and answers which should help you get a better understanding of my needs are contained in this array: ${JSON.stringify(user.profile.financialQuestionnaires)}`,
+        },
+        {
+            role: "user",
+            content: `Carefully analyze my needs by analyzing my preferences against the list of financial products which I provided you. 
                         Ensure that you provide a brief recommendation of 3 products which helps the user (Financial analysis), how each product compliments the other products on your list. At the end, list all the recommended 
                         products you selected in this format inbound_sign_in_url, business_website, outbound_business_app, about, logo and business keywords in an array format.`,
-            },
-        ];
-        return await primeResponse(await getFinancialAdvice(messages));
+        },
+    ];
+    return await primeResponse(await getFinancialAdvice(messages));
 }
 
 const processRecommendations = async (user, productsToProcess) => {
@@ -195,7 +230,7 @@ const processRecommendations = async (user, productsToProcess) => {
             user: user,
             productsToProcess: productsToProcess
         });
-    }catch (error){
+    } catch (error) {
         logger.error(error)
     }
 }
