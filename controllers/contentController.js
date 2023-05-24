@@ -45,7 +45,7 @@ exports.generatePosts = async (keyword, max_tokens, total_words, imageSource = n
             image = imageUrlFromUnsplash.data.urls.regular;
             thumbnail = imageUrlFromUnsplash.data.urls.thumb;
         }
-        let postUpdate = await postController.persistPostInDBAndCache(processedPostContent[0],
+        await postController.persistPostInDBAndCache(processedPostContent[0],
             processedPostContent[2], image, thumbnail,
             processedPostContent[1], author)
         logger.info(`completed saving the automated post for ${keyword}`)
