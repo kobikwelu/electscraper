@@ -1,0 +1,11 @@
+branch-defaults:
+  master:
+    environment: Recommendationservice-node-16-env
+global:
+  application_name: recommendationservice-node-16
+  default_ec2_keyname: recommendationservice-keypair
+  default_platform: Node.js 16 running on 64bit Amazon Linux 2/5.8.1
+  default_region: us-west-1
+  profile: kenneth
+  sc: git
+  
