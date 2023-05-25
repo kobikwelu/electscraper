@@ -114,6 +114,7 @@ const server = app.listen(app.get("port"), async () => {
 });
 
 
+/*
 cron.schedule(`${config.cronTime}`, async () => {
     logger.info(`generating new posts for today ${Date.now()}`);
     try {
@@ -126,6 +127,7 @@ cron.schedule(`${config.cronTime}`, async () => {
         logger.info(ex);
     }
 });
+*/
 
 
 function errorHandler(err, req, res, next) {
