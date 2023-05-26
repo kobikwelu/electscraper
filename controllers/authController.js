@@ -718,7 +718,7 @@ exports.updateUser = async (req, res) => {
             description: ResponseTypes.SUCCESS["200"]
         })
     } catch (error) {
-        console.log(error)
+        logger.info(error)
         res.status(500);
         res.json({
             description: ResponseTypes.ERROR["500"]

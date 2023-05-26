@@ -23,12 +23,26 @@ exports.createClient = async () => {
                 url: getConnectionString(),
                 lazyConnect: true,
                 showFriendlyErrorStack: true,
+                enableOfflineQueue: true,
+                maxRetriesPerRequest: null, // Null means that it will retry forever
+                retry_strategy: function (options) {
+                    if (options.error && options.error.code === 'ECONNREFUSED') {
+                        return new Error('The server refused the connection');
+                    }
+                    if (options.total_retry_time > 1000 * 60 * 60) {
+                        return new Error('Retry time exhausted');
+                    }
+                    if (options.attempt > 10) {
+                        return undefined;
+                    }
+                    return Math.min(options.attempt * 100, 3000);
+                },
                 socket: {
                     tls: false,
                     rejectUnauthorized: false,
                     keepAlive: 10000,
                     connectTimeoutMS: 50000,
-                    reconnectStrategy: (retries=>{
+                    reconnectStrategy: (retries => {
                         Math.min(retries * 50, 500)
                     })
                 }
@@ -37,7 +51,20 @@ exports.createClient = async () => {
 
 
         } else {
-            redisClient = await redis.createClient({});
+            redisClient = await redis.createClient({
+                retry_strategy: function (options) {
+                    if (options.error && options.error.code === 'ECONNREFUSED') {
+                        return new Error('The server refused the connection');
+                    }
+                    if (options.total_retry_time > 1000 * 60 * 60) {
+                        return new Error('Retry time exhausted');
+                    }
+                    if (options.attempt > 10) {
+                        return undefined;
+                    }
+                    return Math.min(options.attempt * 100, 3000);
+                },
+            });
             logger.info('***** LOCAL REDIS client created .....')
 
             redisClient.on("error", (error) => {
@@ -76,4 +103,3 @@ exports.createClient = async () => {
         logger.error(`REDIS Error : ${error}`)
     }
 }
-
