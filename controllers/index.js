@@ -13,6 +13,7 @@ const collationController = require('./collationController');
 const recommendationController = require('./recommendationController');
 const postController = require('./postController');
 const contentController = require('./contentController');
+const statusController = require('./statusController');
 
 module.exports = {
     electionResultController,
@@ -27,5 +28,6 @@ module.exports = {
     collationController,
     recommendationController,
     postController,
-    contentController
+    contentController,
+    statusController
 }
