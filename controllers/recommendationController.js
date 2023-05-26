@@ -7,6 +7,7 @@ const FinancialRecommendation = require('../models/FinancialRecommendation')
 const Bull = require('bull');
 const recommendationsQueue = new Bull('recommendations');
 
+const DefaultRecommendation = require('../constants/DefaultRecommendation')
 
 exports.recommendation = async (req, res) => {
     const email = req.body.email;
@@ -18,7 +19,12 @@ exports.recommendation = async (req, res) => {
             logger.info('new advisory is needed')
             try {
 
-                let listOfFinancialProducts = await batchFinancialProducts(FinancialProductGuide)
+                let recommendation = DefaultRecommendation.recommendation
+                //TOD0 - This is a default message
+                //The goal will be to send this off to a message queue service with this key and then return this temporal
+                //response for the user
+
+             /*   let listOfFinancialProducts = await batchFinancialProducts(FinancialProductGuide)
 
                 // Process the first item in real-time
                 let firstProduct = listOfFinancialProducts.shift();
@@ -26,12 +32,12 @@ exports.recommendation = async (req, res) => {
                 recommendationsHaul.push(firstRecommendation);
 
                 // Send other items to the Redis message queue to be processed by Bull
-                await processRecommendations(user, listOfFinancialProducts);
-                if (firstRecommendation) {
+                await processRecommendations(user, listOfFinancialProducts);*/
+                if (recommendation) {
                     logger.info('advisory created ')
                     logger.info('saving to cache')
                     let advisoryKey = email + 'chatgptadvisory'
-                    await redisClient.set(advisoryKey, JSON.stringify(firstRecommendation), {
+                    await redisClient.set(advisoryKey, JSON.stringify(recommendation), {
                         ex: 120,
                         NX: true
                     })
@@ -41,7 +47,7 @@ exports.recommendation = async (req, res) => {
                     logger.info('updated advisory flag')
                     res.status(200);
                     res.json({
-                        firstRecommendation
+                        recommendation
                     })
                 } else {
                     res.status(500);
@@ -61,11 +67,11 @@ exports.recommendation = async (req, res) => {
             let advisorKey = email + 'chatgptadvisory'
             const cacheResults = await redisClient.get(advisorKey);
             if (cacheResults) {
-                let results = JSON.parse(cacheResults);
+                let recommendation = JSON.parse(cacheResults);
                 logger.info(`pulling item from the advisory cache`)
                 res.status(200)
                 res.send({
-                    results
+                    recommendation
                 })
             }
         }
