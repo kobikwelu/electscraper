@@ -16,4 +16,10 @@ async function runTask() {
     }
 }
 
-await runTask();
+(async function() {
+    try {
+        await runTask();
+    } catch (e) {
+        console.error(e);
+    }
+})();
