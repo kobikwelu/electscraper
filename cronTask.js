@@ -1,7 +1,7 @@
 const { contentController } = require('./controllers');
 const config = require("./config");
 const {totalWords, maxToken, postKeywords} = config
-const logger = require('pino')();
+
 
 async function runTask() {
     logger.info(`generating new posts for today ${Date.now()}`);
