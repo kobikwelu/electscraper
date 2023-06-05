@@ -12,8 +12,6 @@ const DefaultRecommendation = require('../constants/DefaultRecommendation')
 exports.recommendation = async (req, res) => {
     const email = req.body.email;
     const user = await User.findOne({}).byEmail(email);
-    let recommendationsHaul = []
-
     if (email) {
         if (user.profile.isNewAdvisoryNeeded) {
             logger.info('new advisory is needed')
@@ -24,15 +22,20 @@ exports.recommendation = async (req, res) => {
                 //The goal will be to send this off to a message queue service with this key and then return this temporal
                 //response for the user
 
-             /*   let listOfFinancialProducts = await batchFinancialProducts(FinancialProductGuide)
+                let listOfFinancialProducts = await batchFinancialProducts(FinancialProductGuide)
+                let recommendationQueueUrl;
 
-                // Process the first item in real-time
-                let firstProduct = listOfFinancialProducts.shift();
-                let firstRecommendation = await this.interactWithChatGPTKnowledgeBase(user, firstProduct);
-                recommendationsHaul.push(firstRecommendation);
+                if(config.messageQueue.recommendation_queue_url){
+                    recommendationQueueUrl = config.messageQueue.recommendation_queue_url
+                } else {
+                    recommendationQueueUrl = 'http://localhost:4252/api/v1/recommendationqueue'
+                }
+                 axios.post(recommendationQueueUrl, {
+                     email,
+                    productsToProcess: listOfFinancialProducts
+                });
 
-                // Send other items to the Redis message queue to be processed by Bull
-                await processRecommendations(user, listOfFinancialProducts);*/
+                logger.info('message enqueued')
                 if (recommendation) {
                     logger.info('advisory created ')
                     logger.info('saving to cache')
@@ -47,7 +50,10 @@ exports.recommendation = async (req, res) => {
                     logger.info('updated advisory flag')
                     res.status(200);
                     res.json({
-                        recommendation
+                        recommendation,
+                        message: 'While we curate your personalized app recommendations, ' +
+                            'please browse these sponsored options that might interest you. ' +
+                            'Your unique selection will be ready in a jiffy - thank you for your patience! '
                     })
                 } else {
                     res.status(500);

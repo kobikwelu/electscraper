@@ -54,6 +54,9 @@ const config = {
   },
   openAi: {
     API_KEY: process.env.OPENAI_API_KEY
+  },
+  messageQueue: {
+    recommendation_queue_url: process.env.RECOMMENDATION_QUEUE_BASE_URL
   }
 };
 
