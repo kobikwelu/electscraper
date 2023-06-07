@@ -27,8 +27,10 @@ exports.recommendation = async (req, res) => {
 
                 if(config.messageQueue.recommendation_queue_url){
                     recommendationQueueUrl = config.messageQueue.recommendation_queue_url
+                    logger.info (`reaching external url ${config.messageQueue.recommendation_queue_url}`)
                 } else {
                     recommendationQueueUrl = 'http://localhost:4252/api/v1/recommendationqueue'
+                    logger.info (`defaulting to internal url ${recommendationQueueUrl}`)
                 }
                  axios.post(recommendationQueueUrl, {
                      email,
