@@ -71,17 +71,23 @@ exports.recommendation = async (req, res) => {
                 });
             }
         } else {
+            let cachedRecommendation;
             logger.info(' item already exists. Lets retrieve from cache')
             let advisorKey = email + 'chatgptadvisory'
             const cacheResults = await redisClient.get(advisorKey);
             if (cacheResults) {
-                let recommendation = JSON.parse(cacheResults);
-                logger.info(`pulling item from the advisory cache`)
-                res.status(200)
-                res.send({
-                    recommendation
-                })
+                cachedRecommendation = JSON.parse(cacheResults);
+            } else{
+                cachedRecommendation = []
+                //TODO - This assumes the cache is down or was inadvertedly wiped out
+                //Goal will be up update the advisory flag and retrigger the recommendation
+                //flow to enable a new set of advisory to be seeded in the DB and cache
             }
+            logger.info(`pulling item from the advisory cache`)
+            res.status(200)
+            res.send({
+                recommendation: cachedRecommendation
+            })
         }
     } else {
         res.status(400);
