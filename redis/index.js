@@ -43,7 +43,7 @@ exports.createClient = async () => {
                     keepAlive: 10000,
                     connectTimeoutMS: 50000,
                     reconnectStrategy: (retries => {
-                        Math.min(retries * 50, 500)
+                     return  Math.min(retries * 50, 500)
                     })
                 }
             });

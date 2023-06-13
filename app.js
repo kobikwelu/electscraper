@@ -90,6 +90,7 @@ const server = app.listen(app.get("port"), async () => {
     logger.info(`This is a  ${process.env.NODE_ENV} server`);
     logger.info("*************************************************");
     logger.info("*************************************************");
+    logger.info("***************** recommendation service*********");
     logger.info("*************************************************");
     logger.info("Property of Kenneth Obikwelu");
     logger.info("*************************************************");
