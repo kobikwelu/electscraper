@@ -4,10 +4,16 @@ const API_URL = 'https://api.openai.com/v1/chat/completions';
 const User = require('../models/User')
 const FinancialProductGuide = require('../models/FinancialProductGuide')
 const FinancialRecommendation = require('../models/FinancialRecommendation')
-const Bull = require('bull');
-const recommendationsQueue = new Bull('recommendations');
-
 const DefaultRecommendation = require('../constants/DefaultRecommendation')
+const AWS = require('aws-sdk');
+AWS.config.update({
+    region: 'us-west-1',
+    accessKeyId: config.aws.AWS_KEY,
+    secretAccessKey: config.aws.AWS_SECRET
+});
+
+const sqs = new AWS.SQS();
+const queueUrl = config.sqs.sqs_url
 
 exports.recommendation = async (req, res) => {
     const email = req.body.email;
@@ -17,27 +23,19 @@ exports.recommendation = async (req, res) => {
             logger.info('new advisory is needed')
             try {
 
-                let recommendation = DefaultRecommendation.recommendation
-                //TOD0 - This is a default message
-                //The goal will be to send this off to a message queue service with this key and then return this temporal
-                //response for the user
-
                 let listOfFinancialProducts = await batchFinancialProducts(FinancialProductGuide)
-                let recommendationQueueUrl;
-
-                if(config.messageQueue.recommendation_queue_url){
-                    recommendationQueueUrl = config.messageQueue.recommendation_queue_url
-                    logger.info (`reaching external url ${config.messageQueue.recommendation_queue_url}`)
-                } else {
-                    recommendationQueueUrl = 'http://localhost:4252/api/v1/recommendationqueue'
-                    logger.info (`defaulting to internal url ${recommendationQueueUrl}`)
-                }
-                 axios.post(recommendationQueueUrl, {
-                     email,
-                    productsToProcess: listOfFinancialProducts
-                });
-
-                logger.info('message enqueued')
+                const params = {
+                    MessageBody: JSON.stringify({
+                        user,
+                        productsToProcess: listOfFinancialProducts
+                    }), // message should be a String
+                    QueueUrl: queueUrl,
+                    MessageGroupId: 'tally-recommendation',
+                    MessageDeduplicationId: `${email}chatgptadvisory`
+                };
+                const response = await sqs.sendMessage(params).promise();
+                logger.info(`Message ${response.MessageId} enqueued successfully.`);
+                let recommendation = DefaultRecommendation.recommendation
                 if (recommendation) {
                     logger.info('advisory created ')
                     logger.info('saving to cache')

@@ -57,7 +57,10 @@ const config = {
   },
   messageQueue: {
     recommendation_queue_url: process.env.RECOMMENDATION_QUEUE_BASE_URL
-  }
+  },
+    sqs:{
+      sqs_url: process.env.SQS_URL
+    }
 };
 
 /**
