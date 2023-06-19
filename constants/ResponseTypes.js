@@ -33,10 +33,11 @@ const ResponseTypes = {
             SUBSCRIPTION_SUCCESS: 'You have successfully confirmed your Tally subscription',
             REGISTRATION_CONFIRM: 'Welcome to Tally ',
             PASSWORD_RESET_INITIAL: 'You requested for a password change',
+            TEMPORARY_PASSWORD_SENT: 'We have sent an email to you to help you reset your password',
             DAILY_NEWS: 'Your today news update specially delivered',
             SUBSCRIPTION_WELCOME: 'Welcome to Tally ',
             PASSWORD_GATE_REQUIRED: "new password required",
-            TEMPORARY_PASSWORD_DETECTED: "user logged in with a temporary account"
+            TEMPORARY_PASSWORD_DETECTED: "user logged in with a temporary password"
         },
         BUSINESS_NOTIFICATION : {
             EMAIL_CONFIRMATION_STILL_PENDING: 'Your account is not yet verified. ' +

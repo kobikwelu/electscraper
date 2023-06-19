@@ -44,8 +44,8 @@ const genToken = async (role, username, email) => {
     let token = jwt.encode({
         //TODO: issuer/request (origin) source must be added for extra security
         //issuer   : "http://localhost:8080",
-        issuer: origin,
-        //issuer: `${keys.Origin_backend}`,
+        //issuer: origin,
+        issuer: `${keys.Origin_backend}`,
         issuedAt: issuedAt,
         expiresAt: expiresAt,
         role: role,
@@ -54,7 +54,9 @@ const genToken = async (role, username, email) => {
     return {
         token: token,
         issuedAt: issuedAt,
-        expires: expiresAt
+        expires: expiresAt,
+        issuer: `${keys.Origin_backend}`,
+        origin: origin
     };
 }
 
@@ -415,7 +417,7 @@ exports.signIn = async (req, res) => {
                                         businessError: {
                                             tokenAccess: false,
                                             accountState: 'Account is disabled',
-                                            message: 'reach us at account@tallyng.com to unlock your account'
+                                            message: 'reach us at support@tallyng.com to unlock your account'
                                         }
                                     })
                                 }
@@ -773,9 +775,6 @@ exports.nonAuthResetPasswordRequest = async (req, res) => {
                 });
 
                 await user.save();
-                await auditLogsController.addLog(email, req.useragent, 'updated security features',
-                    'success', '' + userTriggeredProcessUpdate.showChangePasswordGate + ', ' +
-                    userTriggeredProcessUpdate.temporaryPassword + ', ' + userTriggeredProcessUpdate.disableAccount)
                 res.status(200);
                 res.json({
                     description: ResponseTypes.SUCCESS.MESSAGES.TEMPORARY_PASSWORD_SENT
@@ -824,8 +823,6 @@ exports.nonAuthResetPasswordPriorToLogin = async (req, res) => {
     if (temporaryPassword && newPassword && email) {
         try {
             if (user === null) {
-                await auditLogsController.addLog(email, req.useragent, 'reset temporary password', ResponseTypes.ERROR["401"],
-                    ResponseTypes.ERROR.MESSAGES.ACCOUNT_DOES_NOT_EXIST);
                 res.status(401);
                 res.json({
                     message: ResponseTypes.ERROR["401"],
@@ -858,14 +855,11 @@ exports.nonAuthResetPasswordPriorToLogin = async (req, res) => {
                     });
 
                     user.save();
-                    await auditLogsController.addLog(user.email, req.useragent, 'password reset', ResponseTypes.SUCCESS["200"], ResponseTypes.SUCCESS.MESSAGES.PASSWORD_RESET_SUCCESS);
                     res.status(200);
                     res.json({
                         message: ResponseTypes.SUCCESS["200"],
                     })
                 } else {
-                    await auditLogsController.addLog(email, req.useragent, 'reset temporary password', ResponseTypes.ERROR["401"],
-                        'user temporary and existing temporary password does not match');
                     res.status(401);
                     res.json({
                         message: ResponseTypes.ERROR["401"],
@@ -874,7 +868,6 @@ exports.nonAuthResetPasswordPriorToLogin = async (req, res) => {
                 }
             }
         } catch (error) {
-            await auditLogsController.addLog(email, req.useragent, 'reset temporary password', ResponseTypes.ERROR["500"], error);
             res.status(500);
             res.json({
                 description: ResponseTypes.ERROR["500"]

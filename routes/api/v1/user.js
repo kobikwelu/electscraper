@@ -20,8 +20,8 @@ router.post('/login', authController.signIn);
 
 router.get('/activateAccount/:uuid', authController.verifyActivationEmail);
 
-//router.post('/resetPassword/sendEmail', authController.nonAuthResetPasswordRequest);
-//router.post('/resetPassword/passwordGate', authController.nonAuthResetPasswordPriorToLogin);
+router.post('/resetPassword/sendEmail', authController.nonAuthResetPasswordRequest);
+router.post('/resetPassword/passwordGate', authController.nonAuthResetPasswordPriorToLogin);
 
 
 /**
