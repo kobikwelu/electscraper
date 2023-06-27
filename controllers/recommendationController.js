@@ -92,15 +92,15 @@ exports.appList = async (req, res) => {
 
     if (email) {
         try {
-            const financialRecommendationsList = await FinancialRecommendation.find({}).byEmail(email).sort({timestamp: -1});
+            const financialRecommendationsList = await FinancialRecommendation.find({email: email}).sort({timestamp: -1}).exec();
+
             let appsHistory = []
 
             financialRecommendationsList.forEach(recommendation => {
-                recommendation.advisoryList.forEach(advisory => {
-                    appsHistory.push(...advisory.productsList);
+                recommendation.productList.forEach(product => {
+                    appsHistory.push(product);
                 });
             });
-
             res.status(200)
             res.send({
                 appsHistory
