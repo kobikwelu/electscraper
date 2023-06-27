@@ -12,7 +12,10 @@ const financialProductGuideSchema = new mongoose.Schema({
     inbound_sign_in_url: String,
     outbound_apple_store: String,
     outbound_google_play_store: String,
-    logo: String
+    logo: String,
+    likes: { type: Number, default: 0 },
+    saves: { type: Number, default: 0 },
+    signups: { type: Number, default: 0 }
 });
 
 
