@@ -61,6 +61,37 @@ const genToken = async (role, username, email) => {
 }
 
 
+
+/*const genToken_old_working_copy_with_dev_bridge = async (role, username, email) => {
+    let origin
+    logger.info('gen token starts')
+    if (process.env.NODE_ENV === 'production') {
+        //TODO - Temporal bridge to allow for remote development. MST REVERT TO LINE BELOW
+        //origin = `${keys.Origin_frontend}`;
+        origin = "http://localhost:3000"
+    } else {
+        origin = "http://localhost:3000"
+    }
+    let expiresAt = await expiresInV3(1440);
+    let issuedAt = await getCurrentTimeV2();
+    let token = jwt.encode({
+        //TODO: issuer/request (origin) source must be added for extra security
+        //issuer   : "http://localhost:8080",
+        issuer: origin,
+        //issuer: `${keys.Origin_backend}`,
+        issuedAt: issuedAt,
+        expiresAt: expiresAt,
+        role: role,
+        email: email
+    }, await getSigningKey('private'), 'HS512');
+    return {
+        token: token,
+        issuedAt: issuedAt,
+        expires: expiresAt
+    };
+}*/
+
+
 const expiresInV3 = async (numberOfMinutes) => {
     return await getCurrentTimeV2() + numberOfMinutes * MILLISECONDS
 }

@@ -18,16 +18,16 @@ const queueUrl = config.sqs.sqs_url
 exports.recommendation = async (req, res) => {
     const email = req.body.email;
     const user = await User.findOne({}).byEmail(email);
+    const financialProductGuides = await FinancialProductGuide.find({}, '-_id');
     if (email) {
         if (user.profile.isNewAdvisoryNeeded) {
             logger.info('new advisory is needed')
             try {
 
-                let listOfFinancialProducts = await batchFinancialProducts(FinancialProductGuide)
                 const params = {
                     MessageBody: JSON.stringify({
                         user,
-                        productsToProcess: listOfFinancialProducts
+                        productsToProcess: financialProductGuides
                     }), // message should be a String
                     QueueUrl: queueUrl,
                     MessageGroupId: 'tally-recommendation',
@@ -35,33 +35,25 @@ exports.recommendation = async (req, res) => {
                 };
                 const response = await sqs.sendMessage(params).promise();
                 logger.info(`Message ${response.MessageId} enqueued successfully.`);
-                let recommendation = DefaultRecommendation.recommendation
-                if (recommendation) {
-                    logger.info('advisory created ')
-                    logger.info('saving to cache')
-                    let advisoryKey = email + 'chatgptadvisory'
-                    await redisClient.set(advisoryKey, JSON.stringify(recommendation), {
-                        ex: 120,
-                        NX: true
-                    })
-                    logger.info('cache write successful')
-                    user.profile.isNewAdvisoryNeeded = false
-                    await user.save();
-                    logger.info('updated advisory flag')
-                    res.status(200);
-                    res.json({
-                        recommendation,
-                        message: 'While we curate your personalized app recommendations, ' +
-                            'please browse these sponsored options that might interest you. ' +
-                            'Your unique selection will be ready in a jiffy - thank you for your patience! '
-                    })
-                } else {
-                    res.status(500);
-                    res.json({
-                        message: 'We cannot process your request for now'
-                    })
-                }
-
+              /*  user.profile.isNewAdvisoryNeeded = false
+                await user.save();
+                logger.info('updated advisory flag') */
+                res.status(200);
+                res.json({
+                    ads: [
+                        {
+                            business_name: "GoDaddy",
+                            business_website: "https://godaddy.com/",
+                        },
+                        {
+                            business_name: "Meta",
+                            business_website: "https://meta.com/",
+                        }
+                    ],
+                    message: 'While we curate your personalized app recommendations, ' +
+                        'please browse these sponsored options that might interest you. ' +
+                        'Your unique selection will be ready in a jiffy - thank you for your patience! '
+                })
             } catch (error) {
                 logger.info(error)
                 res.status(error.response?.status || 500).json({
@@ -191,34 +183,6 @@ const batchFinancialProducts_deprecated = async (model) => {
     }
 }
 
-const batchFinancialProducts = async (model) => {
-    const resultSet = [];
-    try {
-        const totalRecords = await model.countDocuments({});
-        const recordsPerBatch = 6;
-        const numBatches = Math.ceil(totalRecords / recordsPerBatch);
-        const seenIds = [];
-
-        for (let i = 0; i < numBatches; i++) {
-            const records = await model.aggregate([
-                {$match: {_id: {$nin: seenIds}}},
-                {$sample: {size: recordsPerBatch}},
-                {$limit: recordsPerBatch}
-            ]);
-
-            records.forEach(record => {
-                seenIds.push(record._id);
-            });
-
-            resultSet.push(records);
-        }
-
-        return resultSet;
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
 
 exports.interactWithChatGPTKnowledgeBase = async (user, productSet) => {
     logger.info('interaction with FinancialRecommendation engine started')
@@ -241,14 +205,3 @@ exports.interactWithChatGPTKnowledgeBase = async (user, productSet) => {
     return await primeResponse(await getFinancialAdvice(messages));
 }
 
-const processRecommendations = async (user, productsToProcess) => {
-    logger.info('workers spin off process to process pending set of recommendations')
-    try {
-        await recommendationsQueue.add({
-            user: user,
-            productsToProcess: productsToProcess
-        });
-    } catch (error) {
-        logger.error(error)
-    }
-}
