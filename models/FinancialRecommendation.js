@@ -23,7 +23,17 @@ const financialRecommendationSchema = new mongoose.Schema({
         outbound_business_app: String,
         about: String,
         logo: String,
-        business_keywords: []
+        business_keywords: [],
+        meta:{
+            investors: String,
+            growth: String,
+            countries_of_operations: String,
+            company_rating: String,
+            developer_docs: String,
+            leadership_team: String,
+            major_services_offered: String,
+            address: String
+        }
     }],
     timestamp: Date
 });

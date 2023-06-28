@@ -3,6 +3,7 @@ const axios = require('axios');
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 const User = require('../models/User')
 const FinancialProductGuide = require('../models/FinancialProductGuide')
+const ProductGuidesMeta = require('../models/ProductGuidesMeta')
 const FinancialRecommendation = require('../models/FinancialRecommendation')
 const AWS = require('aws-sdk');
 AWS.config.update({
@@ -196,4 +197,29 @@ exports.trackUserInteractions = async (req, res) => {
             message: "Missing required values or action must be one of likes | saves | signups"
         })
     }
+}
+
+const buildFinancialGuideWithMetaData = async() => {
+    let guidesWithMeta
+    try {
+        const financialProductGuides = await FinancialProductGuide.find({}, '-_id');
+
+
+            guidesWithMeta = await Promise.all(financialProductGuides.map(async (guide) => {
+            const meta = await ProductGuidesMeta.findOne({business_name: guide.business_name})
+                                                .select('_id -business_name -business_website')
+
+            if (meta) {
+                guide = guide.toObject(); // Convert the Mongoose document into a plain JavaScript object
+                guide.meta = meta;
+            }
+
+            return guide;
+        }));
+
+        return guidesWithMeta;
+    } catch (error) {
+        console.error(error);
+    }
+
 }
