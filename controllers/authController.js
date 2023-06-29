@@ -24,7 +24,6 @@ const notificationController = require('../controllers/notificationController');
 const keys = require('../config');
 
 
-
 const SALT_ROUNDS = 10;
 const MILLISECONDS = 60000;
 
@@ -59,7 +58,6 @@ const genToken = async (role, username, email) => {
         origin: origin
     };
 }
-
 
 
 /*const genToken_old_working_copy_with_dev_bridge = async (role, username, email) => {
@@ -125,9 +123,9 @@ exports.verifyToken = async (token, key, origin) => {
         }
     } catch (error) {
         logger.info(error)
-        if (error.message === 'Signature verification failed'){
+        if (error.message === 'Signature verification failed') {
             return ResponseTypes.ERROR["400"]
-        } else{
+        } else {
             return ResponseTypes.ERROR["500"]
         }
     }
@@ -739,7 +737,7 @@ exports.updateUser = async (req, res) => {
         logger.info('saving profile changes in sor')
         await user.save();
         logger.info('profile successfully updated')
-        if (purgeAdvisoryCache){
+        if (purgeAdvisoryCache) {
             logger.info('new profile update was requested with new questionnaires')
             logger.info('purging cache of old advisory')
             let advisoryCacheString = key + 'chatgptadvisory'
@@ -994,3 +992,22 @@ exports.verifyActivationEmail = async (req, res) => {
     }
 }
 
+
+exports.reSendActivationEmail = async (req, res) => {
+    const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
+    try {
+        const user = await User.findOne({}).byEmail(key);
+        const activationLink = `${keys.Origin_backend}/api/v1/user/activateAccount/${user.emailActivationToken}&email=${user.email}`;
+        logger.info('activation link created')
+        await notificationController.sendEmailMessage(user, {
+            subject: ResponseTypes.SUCCESS.MESSAGES.REGISTRATION_CONFIRM,
+            activationLink
+        });
+        res.status(200);
+        res.json({
+            message: 'activation email has been resent. Please check your inbox and spam folder',
+        })
+    } catch (error) {
+        logger.info(error)
+    }
+}
