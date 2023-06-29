@@ -12,6 +12,8 @@ const { recommendationController }  = require('../../../controllers');
 
 router.post('/', recommendationController.recommendation);
 
+router.get('/', recommendationController.getLatestRecommendation);
+
 router.get('/tray', recommendationController.appList)
 
 router.post('/trackuserinteraction', recommendationController.trackUserInteractions)

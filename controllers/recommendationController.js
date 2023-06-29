@@ -20,8 +20,7 @@ exports.recommendation = async (req, res) => {
     const user = await User.findOne({}).byEmail(email);
     const financialProductGuides = await FinancialProductGuide.find({}, '-_id');
     if (email) {
-        if (user.profile.isNewAdvisoryNeeded) {
-            logger.info('new advisory is needed')
+            logger.info('building advisory')
             try {
 
                 const params = {
@@ -60,24 +59,34 @@ exports.recommendation = async (req, res) => {
                     message: error.response?.statusText || 'Internal Server Error'
                 });
             }
-        } else {
-            let cachedRecommendation;
-            logger.info(' item already exists. Lets retrieve from cache')
-            let advisorKey = email + 'chatgptadvisory'
-            const cacheResults = await redisClient.get(advisorKey);
-            if (cacheResults) {
-                cachedRecommendation = JSON.parse(cacheResults);
-            } else {
-                cachedRecommendation = []
-                //TODO - This assumes the cache is down or was inadvertedly wiped out
-                //Goal will be up update the advisory flag and retrigger the recommendation
-                //flow to enable a new set of advisory to be seeded in the DB and cache
-            }
-            logger.info(`pulling item from the advisory cache`)
+    } else {
+        res.status(400);
+        res.json({
+            message: "Missing required values"
+        })
+    }
+};
+
+exports.getLatestRecommendation = async (req, res) => {
+    const email = req.headers['email'];
+
+
+    if (email) {
+        try {
+            let recommendation = await FinancialRecommendation.findOne({
+                email: email
+            })
+                .sort({timestamp: -1});
             res.status(200)
             res.send({
-                recommendation: cachedRecommendation
+                recommendation
             })
+
+        } catch (error) {
+            logger.info(error)
+            res.status(error.response?.status || 500).json({
+                message: error.response?.statusText || 'Internal Server Error'
+            });
         }
     } else {
         res.status(400);
