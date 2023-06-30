@@ -9,7 +9,7 @@ const productGuidesMetaSchema = new mongoose.Schema({
     countries_of_operation: String,
     company_rating: String,
     developer_docs: String,
-    leadership_team: String,
+    leadership_team: [],
     major_services_offered: String,
     address: String
 });
