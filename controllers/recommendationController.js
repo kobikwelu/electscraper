@@ -101,10 +101,12 @@ exports.appList = async (req, res) => {
     const count = await FinancialProductGuide.countDocuments({likes: {$gt: 0}});
     const mostLikedPercentile = Math.ceil(count * 0.60);  // Adjust this number to change the percentile
     const mostSignupsPercentile = Math.ceil(count * 0.30);  // Adjust this number to change the percentile
+    const mostSavesPercentile = Math.ceil(count * 0.40);  // Adjust this number to change the percentile
     let result = {
         yourRecommendations: {},
         mostLiked: {},
-        mostSignups: {}
+        mostSignups: {},
+        mostSaves:{}
     }
 
     if (email) {
@@ -145,6 +147,16 @@ exports.appList = async (req, res) => {
 
             result.mostSignups.count = financialProductGuideSignupsList.length
             result.mostSignups.signupsList = financialProductGuideSignupsList
+
+            const financialProductGuideSavesList = await FinancialProductGuide
+                .find({saves: {$gt: 0}})
+                .select('-signups -likes')
+                .sort({saves: -1})
+                .limit(mostSavesPercentile)
+                .exec();
+
+            result.mostSaves.count = financialProductGuideSavesList.length
+            result.mostSaves.savesList = financialProductGuideSavesList
 
             res.status(200)
             res.send({
