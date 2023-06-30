@@ -6,7 +6,7 @@ const productGuidesMetaSchema = new mongoose.Schema({
     business_website: String,
     investors: String,
     growth: String,
-    countries_of_operations: String,
+    countries_of_operation: String,
     company_rating: String,
     developer_docs: String,
     leadership_team: String,
