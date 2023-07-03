@@ -136,7 +136,7 @@ exports.appList = async (req, res) => {
 
 
             result.mostLiked.count = financialProductGuideLikesList.length
-            result.mostLiked.likesList = financialProductGuideLikesList
+            result.mostLiked.likesList = await buildFinancialGuideWithMetaData(financialProductGuideLikesList)
 
             const financialProductGuideSignupsList = await FinancialProductGuide
                 .find({signups: {$gt: 0}})
@@ -145,8 +145,9 @@ exports.appList = async (req, res) => {
                 .limit(mostSignupsPercentile)
                 .exec();
 
+
             result.mostSignups.count = financialProductGuideSignupsList.length
-            result.mostSignups.signupsList = financialProductGuideSignupsList
+            result.mostSignups.signupsList = await buildFinancialGuideWithMetaData(financialProductGuideSignupsList)
 
             const financialProductGuideSavesList = await FinancialProductGuide
                 .find({saves: {$gt: 0}})
@@ -156,7 +157,7 @@ exports.appList = async (req, res) => {
                 .exec();
 
             result.mostSaves.count = financialProductGuideSavesList.length
-            result.mostSaves.savesList = financialProductGuideSavesList
+            result.mostSaves.savesList = await buildFinancialGuideWithMetaData(financialProductGuideSavesList)
 
             res.status(200)
             res.send({
@@ -220,27 +221,87 @@ exports.trackUserInteractions = async (req, res) => {
     }
 }
 
-const buildFinancialGuideWithMetaData = async() => {
-    let guidesWithMeta
+
+const buildFinancialGuideWithMetaData = async(financialProductGuides) => {
+    let guidesWithMeta = [];
+    logger.info('building started')
     try {
-        const financialProductGuides = await FinancialProductGuide.find({}, '-_id');
+        guidesWithMeta = await Promise.all(financialProductGuides.map(async (guide) => {
+            let meta = await ProductGuidesMeta.findOne({
+                business_name: { $regex: new RegExp(`^${guide.business_name}$`, 'i') },
+            })
+                .select('_id -business_name -business_website')
+                .lean();  // Adding .lean() here
 
-
-            guidesWithMeta = await Promise.all(financialProductGuides.map(async (guide) => {
-            const meta = await ProductGuidesMeta.findOne({business_name: guide.business_name})
-                                                .select('_id -business_name -business_website')
+            let guideWithMeta = guide.toObject(); // converting mongoose document to object
 
             if (meta) {
-                guide = guide.toObject(); // Convert the Mongoose document into a plain JavaScript object
-                guide.meta = meta;
+                meta.leadership_team = await formatLeaderShipTeam(meta.leadership_team)
+                guideWithMeta.meta = meta;
             }
 
-            return guide;
+            // returning only the properties you need
+            return {
+                likes: guideWithMeta.likes,
+                business_name: guideWithMeta.business_name,
+                business_website: guideWithMeta.business_website,
+                business_product_offerings: guideWithMeta.business_product_offerings,
+                inbound_sign_in_url: guideWithMeta.inbound_sign_in_url,
+                outbound_apple_store: guideWithMeta.outbound_apple_store,
+                outbound_google_play_store: guideWithMeta.outbound_google_play_store,
+                logo: guideWithMeta.logo,
+                meta: guideWithMeta.meta,
+            };
         }));
 
         return guidesWithMeta;
+
     } catch (error) {
-        console.error(error);
+        logger.error(error);
+        return null
+    }
+}
+
+const formatLeaderShipTeam = async (input)=>{
+    // Regular expression to match each item enclosed in brackets
+    const regex = /\[([^\]]+)\]/g;
+
+    let match;
+    let result = [];
+
+    // Regular expression to match the URL in each item
+    const urlRegex = /(http[s]?:\/\/[^ ]+)/;
+
+    // While there is a match in the input string
+    while ((match = regex.exec(input)) !== null) {
+        const personString = match[1]; // Get the matched string
+
+        // Extract the URL from the string
+        const urlMatch = personString.match(urlRegex);
+
+        // If a URL was found
+        if (urlMatch !== null) {
+            const url = urlMatch[0];
+
+            // Remove the URL from the personString
+            const name = personString.replace(url, '').trim();
+
+            // Build the object
+            let personObject = {
+                name,
+                link: url
+            };
+
+            // Add the object to the result array
+            result.push(personObject);
+        } else {
+            // If there was no URL, treat the entire string as the name
+            result.push({
+                name: personString.trim(),
+                link: ''
+            });
+        }
     }
 
+    return result;
 }
