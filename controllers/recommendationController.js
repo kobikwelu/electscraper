@@ -97,7 +97,7 @@ exports.getLatestRecommendation = async (req, res) => {
 };
 
 exports.appList = async (req, res) => {
-    const email = req.headers['email']
+    const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
     const count = await FinancialProductGuide.countDocuments({likes: {$gt: 0}});
     const mostLikedPercentile = Math.ceil(count * 0.60);  // Adjust this number to change the percentile
     const mostSignupsPercentile = Math.ceil(count * 0.30);  // Adjust this number to change the percentile
@@ -109,10 +109,10 @@ exports.appList = async (req, res) => {
         mostSaves:{}
     }
 
-    if (email) {
+    if (key) {
         try {
             const financialRecommendationsList = await FinancialRecommendation
-                .find({email: email})
+                .find({email: key})
                 .sort({timestamp: -1})
                 .exec();
 
