@@ -5,6 +5,7 @@ global.logger ??= require('pino')();
 const RateLimit = require("express-rate-limit");
 const device = require("express-device");
 const config = require("./config");
+const cors = require('cors');
 const {totalWords, maxToken, postKeywords} = config
 
 const db = require("./dbConnect");
@@ -42,7 +43,7 @@ const limiter = new RateLimit({
 //may need to ration access based on specific roles
 app.use(limiter);
 
-app.all("/*", (req, res, next) => {
+/*app.all("/!*", (req, res, next) => {
     // CORS headers
     res.header("Access-Control-Allow-Origin", "*");
     res.header(
@@ -59,7 +60,9 @@ app.all("/*", (req, res, next) => {
     } else {
         next();
     }
-});
+});*/
+
+app.use(cors());
 
 app.use("/", require("./routes/index"));
 
