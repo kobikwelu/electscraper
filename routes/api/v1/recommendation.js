@@ -12,9 +12,9 @@ const {checkAccountStatus} = require("../../../middlewares/checkAccountStatus");
 * *********************************GET*****************************************
 */
 
-router.post('/', recommendationController.recommendation);
+router.post('/', [checkJwt, checkAccountStatus], recommendationController.recommendation);
 
-router.get('/', recommendationController.getLatestRecommendation);
+router.get('/', [checkJwt, checkAccountStatus], recommendationController.getLatestRecommendation);
 
 router.get('/tray',[checkJwt, checkAccountStatus],  recommendationController.appList)
 

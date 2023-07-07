@@ -5,6 +5,7 @@ const User = require('../models/User')
 const FinancialProductGuide = require('../models/FinancialProductGuide')
 const ProductGuidesMeta = require('../models/ProductGuidesMeta')
 const FinancialRecommendation = require('../models/FinancialRecommendation')
+const financialAdvisoryKeywords = require('../constants/FinancialAdvisoryKeywords')
 const AWS = require('aws-sdk');
 AWS.config.update({
     region: 'us-west-1',
@@ -20,45 +21,45 @@ exports.recommendation = async (req, res) => {
     const user = await User.findOne({}).byEmail(email);
     const financialProductGuides = await FinancialProductGuide.find({}, '-_id');
     if (email) {
-            logger.info('building advisory')
-            try {
+        logger.info('building advisory')
+        try {
 
-                const params = {
-                    MessageBody: JSON.stringify({
-                        user,
-                        productsToProcess: financialProductGuides
-                    }), // message should be a String
-                    QueueUrl: queueUrl,
-                    MessageGroupId: 'tally-recommendation',
-                    MessageDeduplicationId: `${email}chatgptadvisory`
-                };
-                const response = await sqs.sendMessage(params).promise();
-                logger.info(`Message ${response.MessageId} enqueued successfully.`);
-                /*  user.profile.isNewAdvisoryNeeded = false
-                  await user.save();
-                  logger.info('updated advisory flag') */
-                res.status(200);
-                res.json({
-                    ads: [
-                        {
-                            business_name: "GoDaddy",
-                            business_website: "https://godaddy.com/",
-                        },
-                        {
-                            business_name: "Meta",
-                            business_website: "https://meta.com/",
-                        }
-                    ],
-                    message: 'While we curate your personalized app recommendations, ' +
-                        'please browse these sponsored options that might interest you. ' +
-                        'Your unique selection will be ready in a jiffy - thank you for your patience! '
-                })
-            } catch (error) {
-                logger.info(error)
-                res.status(error.response?.status || 500).json({
-                    message: error.response?.statusText || 'Internal Server Error'
-                });
-            }
+            const params = {
+                MessageBody: JSON.stringify({
+                    user,
+                    productsToProcess: financialProductGuides
+                }), // message should be a String
+                QueueUrl: queueUrl,
+                MessageGroupId: 'tally-recommendation',
+                MessageDeduplicationId: `${email}chatgptadvisory`
+            };
+            const response = await sqs.sendMessage(params).promise();
+            logger.info(`Message ${response.MessageId} enqueued successfully.`);
+            /*  user.profile.isNewAdvisoryNeeded = false
+              await user.save();
+              logger.info('updated advisory flag') */
+            res.status(200);
+            res.json({
+                ads: [
+                    {
+                        business_name: "GoDaddy",
+                        business_website: "https://godaddy.com/",
+                    },
+                    {
+                        business_name: "Meta",
+                        business_website: "https://meta.com/",
+                    }
+                ],
+                message: 'While we curate your personalized app recommendations, ' +
+                    'please browse these sponsored options that might interest you. ' +
+                    'Your unique selection will be ready in a jiffy - thank you for your patience! '
+            })
+        } catch (error) {
+            logger.info(error)
+            res.status(error.response?.status || 500).json({
+                message: error.response?.statusText || 'Internal Server Error'
+            });
+        }
     } else {
         res.status(400);
         res.json({
@@ -108,10 +109,10 @@ exports.appList = async (req, res) => {
         yourRecommendations: {},
         mostLiked: {},
         mostSignups: {},
-        mostSaves:{},
-        history:{
-            saves:{},
-            signups:{}
+        mostSaves: {},
+        history: {
+            saves: {},
+            signups: {}
         }
     }
 
@@ -142,7 +143,7 @@ exports.appList = async (req, res) => {
 
 
             result.mostLiked.count = financialProductGuideLikesList.length
-            result.mostLiked.likesList = await buildFinancialGuideWithMetaData(financialProductGuideLikesList)
+            result.mostLiked.likesList = await buildFinancialGuideWithMetaData(financialProductGuideLikesList, key)
 
 //group signups
             const financialProductGuideSignupsList = await FinancialProductGuide
@@ -153,9 +154,8 @@ exports.appList = async (req, res) => {
                 .exec();
 
 
-
             result.mostSignups.count = financialProductGuideSignupsList.length
-            result.mostSignups.signupsList = await buildFinancialGuideWithMetaData(financialProductGuideSignupsList)
+            result.mostSignups.signupsList = await buildFinancialGuideWithMetaData(financialProductGuideSignupsList, key)
 
             //group saves
             const financialProductGuideSavesList = await FinancialProductGuide
@@ -167,9 +167,9 @@ exports.appList = async (req, res) => {
 
 
             result.mostSaves.count = financialProductGuideSavesList.length
-            result.mostSaves.savesList = await buildFinancialGuideWithMetaData(financialProductGuideSavesList)
+            result.mostSaves.savesList = await buildFinancialGuideWithMetaData(financialProductGuideSavesList, key)
 
-            //self saves
+//self saves
             const financialProductGuideSelfSavesList = await FinancialProductGuide
                 .find({"self.saves": {$gt: 0}})
                 .select('-group.signups -group.likes -group.saves -self.signups')
@@ -178,9 +178,9 @@ exports.appList = async (req, res) => {
                 .exec();
 
             result.history.saves.count = financialProductGuideSelfSavesList.length
-            result.history.saves.selfSavesList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSavesList)
+            result.history.saves.selfSavesList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSavesList, key)
 
-            //self signups
+//self signups
 
             const financialProductGuideSelfSignupList = await FinancialProductGuide
                 .find({"self.signups": {$gt: 0}})
@@ -190,7 +190,7 @@ exports.appList = async (req, res) => {
                 .exec();
 
             result.history.signups.count = financialProductGuideSelfSignupList.length
-            result.history.signups.selfSignupList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSignupList)
+            result.history.signups.selfSignupList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSignupList, key)
 
             res.status(200)
             res.send({
@@ -256,31 +256,33 @@ exports.trackUserInteractions = async (req, res) => {
 }
 
 
-const buildFinancialGuideWithMetaData = async(financialProductGuides) => {
+const buildFinancialGuideWithMetaData = async (financialProductGuides, email) => {
     let guidesWithMeta = [];
-    logger.info('building started')
     try {
         guidesWithMeta = await Promise.all(financialProductGuides.map(async (guide) => {
             let meta = await ProductGuidesMeta.findOne({
-                business_name: { $regex: new RegExp(`^${guide.business_name}$`, 'i') },
+                business_name: {$regex: new RegExp(`^${guide.business_name}$`, 'i')},
             })
-                .select('_id -business_name -business_website')
+                .select('_id -business_website')
                 .lean();  // Adding .lean() here
 
             let guideWithMeta = guide.toObject(); // converting mongoose document to object
 
             if (meta) {
+             let business_keywords = await returnItemFromRecommendation(meta, email)
                 meta.leadership_team = await formatLeaderShipTeam(meta.leadership_team)
                 guideWithMeta.meta = meta;
+                guideWithMeta.business_keywords = business_keywords
             }
+
 
             // returning only the properties you need
             return {
-                likes: guideWithMeta.likes,
                 business_name: guideWithMeta.business_name,
                 business_website: guideWithMeta.business_website,
                 business_product_offerings: guideWithMeta.business_product_offerings,
                 inbound_sign_in_url: guideWithMeta.inbound_sign_in_url,
+                business_keywords: guideWithMeta.business_keywords,
                 outbound_apple_store: guideWithMeta.outbound_apple_store,
                 outbound_google_play_store: guideWithMeta.outbound_google_play_store,
                 logo: guideWithMeta.logo,
@@ -296,7 +298,7 @@ const buildFinancialGuideWithMetaData = async(financialProductGuides) => {
     }
 }
 
-const formatLeaderShipTeam = async (input)=>{
+const formatLeaderShipTeam = async (input) => {
     // Regular expression to match each item enclosed in brackets
     const regex = /\[([^\]]+)\]/g;
 
@@ -335,6 +337,49 @@ const formatLeaderShipTeam = async (input)=>{
                 link: ''
             });
         }
+    }
+
+    return result;
+}
+
+const returnItemFromRecommendation = async (meta, email) => {
+    let defaultKeywords = await returnRandomKeywords(financialAdvisoryKeywords, 5)
+    try {
+        let financialRecommendation = await FinancialRecommendation.findOne({
+            $and: [
+                {'productList.business_name': {$regex: new RegExp(`^${meta.business_name}$`, 'i')}},
+                {email: email}
+            ]
+        });
+        if (financialRecommendation) {
+            let business = financialRecommendation.productList.find(product =>
+                product.business_name.toLowerCase() === meta.business_name.toLowerCase()
+            );
+
+            if (business) {
+               return business.business_keywords;
+            } else{
+                return defaultKeywords
+            }
+        } else{
+            return defaultKeywords
+        }
+    } catch (error) {
+        logger.error(error)
+        return defaultKeywords
+    }
+}
+
+const returnRandomKeywords = async (financialAdvisoryKeywords, number)=>{
+    let keys = Object.keys(financialAdvisoryKeywords);
+    let result = [];
+
+    for(let i = 0; i < number; i++) {
+        let randomKey = keys[Math.floor(Math.random() * keys.length)];
+        result.push(financialAdvisoryKeywords[randomKey]);
+
+        // Remove the used key from the array to avoid duplicates
+        keys = keys.filter(key => key !== randomKey);
     }
 
     return result;
