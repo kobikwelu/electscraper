@@ -6,6 +6,8 @@ const FinancialProductGuide = require('../models/FinancialProductGuide')
 const ProductGuidesMeta = require('../models/ProductGuidesMeta')
 const FinancialRecommendation = require('../models/FinancialRecommendation')
 const financialAdvisoryKeywords = require('../constants/FinancialAdvisoryKeywords')
+const responseTypes = require('../constants/ResponseTypes')
+
 const AWS = require('aws-sdk');
 AWS.config.update({
     region: 'us-west-1',
@@ -50,9 +52,7 @@ exports.recommendation = async (req, res) => {
                         business_website: "https://meta.com/",
                     }
                 ],
-                message: 'While we curate your personalized app recommendations, ' +
-                    'please browse these sponsored options that might interest you. ' +
-                    'Your unique selection will be ready in a jiffy - thank you for your patience! '
+                messages: responseTypes.SUCCESS.ADS
             })
         } catch (error) {
             logger.info(error)
@@ -298,7 +298,7 @@ const buildFinancialGuideWithMetaData = async (financialProductGuides, email) =>
     }
 }
 
-const formatLeaderShipTeam = async (input) => {
+const formatLeaderShipTeam_deprecated = async (input) => {
     // Regular expression to match each item enclosed in brackets
     const regex = /\[([^\]]+)\]/g;
 
@@ -337,6 +337,56 @@ const formatLeaderShipTeam = async (input) => {
                 link: ''
             });
         }
+    }
+
+    return result;
+}
+
+const formatLeaderShipTeam = async (input)=>{
+    // Regular expression to match each item enclosed in brackets
+    const regex = /\[([^\]]+)\]/g;
+
+    let match;
+    let result = [];
+
+    // Regular expression to match the URL in each item
+    const urlRegex = /(http[s]?:\/\/[^\s]+)/;
+
+    // While there is a match in the input string
+    while ((match = regex.exec(input)) !== null) {
+        const personString = match[1]; // Get the matched string
+
+        // Extract the URL from the string
+        const urlMatch = personString.match(urlRegex);
+
+        let url = '';
+        let nameTitleString = personString;
+
+        // If a URL was found
+        if (urlMatch !== null) {
+            url = urlMatch[0];
+
+            // Remove the URL from the personString
+            nameTitleString = personString.replace(url, '').trim();
+        }
+
+        // Split name and title by '-'
+        const nameTitleParts = nameTitleString.split('-').map(part => part.trim());
+        const name = nameTitleParts[0] || '';
+        let title = nameTitleParts.slice(1).join(' - ') || '';
+
+        // Remove trailing hyphen from title
+        title = title.replace(/\s-\s*$/, '');
+
+        // Build the object
+        let personObject = {
+            name,
+            title,
+            link: url
+        };
+
+        // Add the object to the result array
+        result.push(personObject);
     }
 
     return result;
