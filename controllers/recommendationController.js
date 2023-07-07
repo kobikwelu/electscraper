@@ -98,15 +98,21 @@ exports.getLatestRecommendation = async (req, res) => {
 
 exports.appList = async (req, res) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
-    const count = await FinancialProductGuide.countDocuments({likes: {$gt: 0}});
-    const mostLikedPercentile = Math.ceil(count * 0.60);  // Adjust this number to change the percentile
-    const mostSignupsPercentile = Math.ceil(count * 0.30);  // Adjust this number to change the percentile
-    const mostSavesPercentile = Math.ceil(count * 0.40);  // Adjust this number to change the percentile
+    const likeCount = await FinancialProductGuide.countDocuments({"group.likes": {$gt: 0}});
+    const signupCount = await FinancialProductGuide.countDocuments({"group.signups": {$gt: 0}});
+    const saveCount = await FinancialProductGuide.countDocuments({"group.saves": {$gt: 0}});
+    const mostLikedPercentile = Math.ceil(likeCount * 0.20);  // Adjust this number to change the percentile
+    const mostSignupsPercentile = Math.ceil(signupCount * 0.30);  // Adjust this number to change the percentile
+    const mostSavesPercentile = Math.ceil(saveCount * 0.40);  // Adjust this number to change the percentile
     let result = {
         yourRecommendations: {},
         mostLiked: {},
         mostSignups: {},
-        mostSaves:{}
+        mostSaves:{},
+        history:{
+            saves:{},
+            signups:{}
+        }
     }
 
     if (key) {
@@ -126,11 +132,11 @@ exports.appList = async (req, res) => {
             result.yourRecommendations.count = appsHistory.length
             result.yourRecommendations.appsHistory = appsHistory
 
-
+//group likes
             const financialProductGuideLikesList = await FinancialProductGuide
-                .find({likes: {$gt: 0}})
-                .select('-saves -signups')
-                .sort({likes: -1})
+                .find({"group.likes": {$gt: 0}})
+                .select('-group.saves -group.signups -self.saves -self.signups')
+                .sort({"group.likes": -1})
                 .limit(mostLikedPercentile)
                 .exec();
 
@@ -138,26 +144,53 @@ exports.appList = async (req, res) => {
             result.mostLiked.count = financialProductGuideLikesList.length
             result.mostLiked.likesList = await buildFinancialGuideWithMetaData(financialProductGuideLikesList)
 
+//group signups
             const financialProductGuideSignupsList = await FinancialProductGuide
-                .find({signups: {$gt: 0}})
-                .select('-saves -likes')
-                .sort({signups: -1})
+                .find({"group.signups": {$gt: 0}})
+                .select('-group.saves -group.likes -self.saves -self.signups')
+                .sort({"group.signups": -1})
                 .limit(mostSignupsPercentile)
                 .exec();
+
 
 
             result.mostSignups.count = financialProductGuideSignupsList.length
             result.mostSignups.signupsList = await buildFinancialGuideWithMetaData(financialProductGuideSignupsList)
 
+            //group saves
             const financialProductGuideSavesList = await FinancialProductGuide
-                .find({saves: {$gt: 0}})
-                .select('-signups -likes')
-                .sort({saves: -1})
+                .find({"group.saves": {$gt: 0}})
+                .select('-group.signups -group.likes -self.saves -self.signups')
+                .sort({"group.saves": -1})
                 .limit(mostSavesPercentile)
                 .exec();
 
+
             result.mostSaves.count = financialProductGuideSavesList.length
             result.mostSaves.savesList = await buildFinancialGuideWithMetaData(financialProductGuideSavesList)
+
+            //self saves
+            const financialProductGuideSelfSavesList = await FinancialProductGuide
+                .find({"self.saves": {$gt: 0}})
+                .select('-group.signups -group.likes -group.saves -self.signups')
+                .sort({"self.saves": -1})
+                .limit(mostSavesPercentile)
+                .exec();
+
+            result.history.saves.count = financialProductGuideSelfSavesList.length
+            result.history.saves.selfSavesList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSavesList)
+
+            //self signups
+
+            const financialProductGuideSelfSignupList = await FinancialProductGuide
+                .find({"self.signups": {$gt: 0}})
+                .select('-group.signups -group.likes -group.saves -self.saves')
+                .sort({"self.signups": -1})
+                .limit(mostSavesPercentile)
+                .exec();
+
+            result.history.signups.count = financialProductGuideSelfSignupList.length
+            result.history.signups.selfSignupList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSignupList)
 
             res.status(200)
             res.send({
@@ -179,44 +212,45 @@ exports.appList = async (req, res) => {
     }
 };
 
+
 exports.trackUserInteractions = async (req, res) => {
-    const {business_name, action} = req.body;
+    const {business_name, action, actionGroup} = req.body; // actionGroup is either 'group' or 'self'
     const allowedKeys = [
         'likes',
         'saves',
         'signups'
     ];
-    if (business_name && action && allowedKeys.includes(action)) {
+    const allowedGroups = [
+        'group',
+        'self'
+    ];
+    if (business_name && action && actionGroup && allowedKeys.includes(action) && allowedGroups.includes(actionGroup)) {
         logger.info('has required information')
 
         try {
             const financialProduct = await FinancialProductGuide.findOne({business_name});
             if (!financialProduct) {
-                res.status(404);
-                res.json({
+                res.status(404).json({
                     message: "Missing required values"
                 });
             }
             // increment the corresponding attribute
-            financialProduct[action] += 1;
+            financialProduct[actionGroup][action] += 1;
             logger.info('updating action')
             await financialProduct.save();
             logger.info('action logged successfully')
-            res.status(200);
-            res.json({
+            res.status(200).json({
                 message: "success"
             });
         } catch (error) {
             logger.error(error)
-            res.status(500);
-            res.json({
+            res.status(500).json({
                 message: "something went wrong"
             });
         }
     } else {
-        res.status(400);
-        res.json({
-            message: "Missing required values or action must be one of likes | saves | signups"
+        res.status(400).json({
+            message: "Missing required values or action must be one of likes | saves | signups and actionGroup must be one of group | self"
         })
     }
 }

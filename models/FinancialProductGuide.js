@@ -13,9 +13,15 @@ const financialProductGuideSchema = new mongoose.Schema({
     outbound_apple_store: String,
     outbound_google_play_store: String,
     logo: String,
-    likes: { type: Number, default: 0 },
-    saves: { type: Number, default: 0 },
-    signups: { type: Number, default: 0 }
+    group: {
+        likes: { type: Number, default: 0 },
+        saves: { type: Number, default: 0 },
+        signups: { type: Number, default: 0 }
+    },
+    self:{
+        saves: { type: Number, default: 0 },
+        signups: { type: Number, default: 0 }
+    }
 });
 
 
