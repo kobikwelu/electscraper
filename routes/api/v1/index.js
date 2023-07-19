@@ -13,6 +13,8 @@ const collationRouter = require('./collation');
 const recommendationRouter = require('./recommendation');
 const statusRouter = require('./status');
 
+const blogRouter = require('./blog');
+
 const districtRouter = require('./district');
 
 const userRouter = require('./user');
@@ -39,6 +41,8 @@ router.use('/state', stateRouter);
 router.use('/district', districtRouter);
 
 router.use('/user', userRouter)
+
+router.use('/blog', blogRouter)
 
 router.use('/recommendation', recommendationRouter)
 

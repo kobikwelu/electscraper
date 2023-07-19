@@ -36,7 +36,8 @@ exports.createPost = async (req, res) => {
 };
 
 exports.getPost = async (req, res) => {
-    const {title, id} = req.query
+   const id = req.headers['id'];
+    const title = req.headers['title'];
     let query = {$or: [{_id: id}, {title: title}]};
 
     if (title || id) {
@@ -44,11 +45,11 @@ exports.getPost = async (req, res) => {
             if (id) {
                 logger.info(` searching for post ${id} in the cache`)
                 let postKey = id + 'blogpost'
-                let cachedPost = JSON.parse(await redisClient.get(postKey))
+                let post = JSON.parse(await redisClient.get(postKey))
                 logger.info(`post ${id} found in the cache`)
                 res.status(200);
                 res.json({
-                    cachedPost
+                    post
                 })
             } else {
                 logger.info(` searching for title ${title} in the db`)
@@ -76,7 +77,8 @@ exports.getPost = async (req, res) => {
 };
 
 exports.getPosts = async (req, res) => {
-    const {page, size} = req.body
+    const page = req.headers['page'];
+    const size = parseInt(req.headers['size'])
 
     if (page && size) {
         try {
