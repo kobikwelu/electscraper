@@ -42,7 +42,7 @@ exports.getPost = async (req, res) => {
 
     if (title || id) {
         try {
-            if (id) {
+           /* if (id) {
                 logger.info(` searching for post ${id} in the cache`)
                 let postKey = id + 'blogpost'
                 let post = JSON.parse(await redisClient.get(postKey))
@@ -51,15 +51,14 @@ exports.getPost = async (req, res) => {
                 res.json({
                     post
                 })
-            } else {
-                logger.info(` searching for title ${title} in the db`)
-                let blog = Post.findOne(query)
-                logger.info(` ${title} found`)
+            } else {*/
+                let blog = await Post.findOne(query)
+                logger.info(` ${id} found`)
                 res.status(200);
                 res.json({
                     blog
                 })
-            }
+          //  }
         } catch (error) {
             logger.error(error)
             res.status(500);
