@@ -14,11 +14,15 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        python-version: '3.9'
+    
+    - name: Upgrade pip, setuptools, and wheel
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel
     
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install awsebcli --upgrade
     
     - name: Configure AWS credentials
@@ -29,4 +33,4 @@ jobs:
     - name: Deploy to Elastic Beanstalk
       run: |
         eb init recommendationservice-node-16 --region us-west-1 --platform Node.js
-        eb deploy Recommendationservice-node-16-env
+        eb deploy Recommendationservice-node-16-env 
