@@ -77,14 +77,15 @@ exports.getPost = async (req, res) => {
 
 exports.getPosts = async (req, res) => {
     const page = req.headers['page'];
+    const category = req.headers['category'];
     const size = parseInt(req.headers['size'])
 
-    if (page && size) {
+    if (page && size && category) {
         try {
-            const posts = await Post.find()
-                .sort({timestamp: -1})  // sorting in descending order by timestamp
-                .skip(size * (page - 1))   // skip the pages before the current one
-                .limit(size)               // limit the result to 20 posts per page
+            const posts = await Post.find({ category: new RegExp(category, 'i') })
+                .sort({timestamp: -1})  // Sorting in descending order by timestamp
+                .skip(size * (page - 1))   // Skip the pages before the current one
+                .limit(size)               // Limit the result to the 'size' posts per page
                 .exec();
 
             res.status(200);
