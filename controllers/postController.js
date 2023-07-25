@@ -36,29 +36,29 @@ exports.createPost = async (req, res) => {
 };
 
 exports.getPost = async (req, res) => {
-   const id = req.headers['id'];
+    const id = req.headers['id'];
     const title = req.headers['title'];
     let query = {$or: [{_id: id}, {title: title}]};
+    let newArticleList = []
+    let post = {
+        article: '',
+        linkedArticles: []
+    }
 
     if (title || id) {
         try {
-           /* if (id) {
-                logger.info(` searching for post ${id} in the cache`)
-                let postKey = id + 'blogpost'
-                let post = JSON.parse(await redisClient.get(postKey))
-                logger.info(`post ${id} found in the cache`)
-                res.status(200);
-                res.json({
-                    post
-                })
-            } else {*/
-                let blog = await Post.findOne(query)
-                logger.info(` ${id} found`)
-                res.status(200);
-                res.json({
-                    blog
-                })
-          //  }
+            let blog = await Post.findOne(query)
+            post.article = blog
+            const posts = await Post.find({category: new RegExp(blog.category, 'i')})
+                .sort({timestamp: -1})
+                .exec();
+
+            post.linkedArticles = await buildArticlesArray(newArticleList, posts)
+
+            res.status(200);
+            res.json({
+                post
+            })
         } catch (error) {
             logger.error(error)
             res.status(500);
@@ -82,7 +82,7 @@ exports.getPosts = async (req, res) => {
 
     if (page && size && category) {
         try {
-            const posts = await Post.find({ category: new RegExp(category, 'i') })
+            const posts = await Post.find({category: new RegExp(category, 'i')})
                 .sort({timestamp: -1})  // Sorting in descending order by timestamp
                 .skip(size * (page - 1))   // Skip the pages before the current one
                 .limit(size)               // Limit the result to the 'size' posts per page
@@ -108,8 +108,8 @@ exports.getPosts = async (req, res) => {
 
 };
 
-exports.persistPostInDBAndCache = async (title, content, image, thumbnail, category, author)=>{
-    try{
+exports.persistPostInDBAndCache = async (title, content, image, thumbnail, category, author) => {
+    try {
         const postObject = await Post.create({
             title,
             content,
@@ -136,7 +136,21 @@ exports.persistPostInDBAndCache = async (title, content, image, thumbnail, categ
             NX: true
         })
         logger.info(`post ${postUpdate._id} successfully saved to cache`)
-    } catch(error){
+    } catch (error) {
         logger.info(error)
     }
+}
+
+const buildArticlesArray = async (newArray, array)=>{
+    for(let i = 0; i < 3; i++) {  // Loop for 3 times
+        if (array.length > 0) {  // Check if array still has elements
+            let randomIndex = Math.floor(Math.random() * array.length);  // Generate a random index
+            let removedItems = array.splice(randomIndex, 1);  // Remove an element from the array
+            newArray.push(removedItems[0]);  // Add the removed element to the new array
+        } else {
+            logger.info("No more items to pick from!");
+            break;
+        }
+    }
+    return newArray
 }
