@@ -11,7 +11,8 @@ const postSchema = new mongoose.Schema({
     thumbnail: String,
     timestamp: String,
     category: String,
-    author: String
+    author: String,
+    url: String
 });
 
 

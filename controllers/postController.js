@@ -38,7 +38,9 @@ exports.createPost = async (req, res) => {
 exports.getPost = async (req, res) => {
     const id = req.headers['id'];
     const title = req.headers['title'];
-    let query = {$or: [{_id: id}, {title: title}]};
+    let url = await this.convertToHyphenatedLowercase(title)
+
+    let query = {$or: [{_id: id}, {url: url}]};
     let newArticleList = []
     let post = {
         article: '',
@@ -79,10 +81,17 @@ exports.getPosts = async (req, res) => {
     const page = req.headers['page'];
     const category = req.headers['category'];
     const size = parseInt(req.headers['size'])
+    let posts
+    let query
 
-    if (page && size && category) {
+    if (page && size) {
         try {
-            const posts = await Post.find({category: new RegExp(category, 'i')})
+            if (category) {
+                query = {category: new RegExp(category, 'i')};
+            } else {
+                query = {};
+            }
+            posts = await Post.find(query)
                 .sort({timestamp: -1})  // Sorting in descending order by timestamp
                 .skip(size * (page - 1))   // Skip the pages before the current one
                 .limit(size)               // Limit the result to the 'size' posts per page
@@ -141,8 +150,8 @@ exports.persistPostInDBAndCache = async (title, content, image, thumbnail, categ
     }
 }
 
-const buildArticlesArray = async (newArray, array)=>{
-    for(let i = 0; i < 3; i++) {  // Loop for 3 times
+const buildArticlesArray = async (newArray, array) => {
+    for (let i = 0; i < 3; i++) {  // Loop for 3 times
         if (array.length > 0) {  // Check if array still has elements
             let randomIndex = Math.floor(Math.random() * array.length);  // Generate a random index
             let removedItems = array.splice(randomIndex, 1);  // Remove an element from the array
@@ -153,4 +162,8 @@ const buildArticlesArray = async (newArray, array)=>{
         }
     }
     return newArray
+}
+
+exports.convertToHyphenatedLowercase = async (inputString) => {
+    return inputString.toLowerCase().replace(/ /g, '-');
 }
