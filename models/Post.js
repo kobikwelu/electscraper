@@ -12,7 +12,8 @@ const postSchema = new mongoose.Schema({
     timestamp: String,
     category: String,
     author: String,
-    url: String
+    url: String,
+    isBreaking: { type: Boolean, default: false }
 });
 
 

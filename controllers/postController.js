@@ -1,30 +1,34 @@
 const Post = require('../models/Post');
+const BreakingPost = require('../models/BreakingPost');
+const config = require('../config')
+const AWS = require('aws-sdk');
+const {AWS_BUCKET, AWS_KEY, AWS_SECRET} = config.aws
+
+AWS.config.update({
+    region: 'us-west-1',
+    accessKeyId: AWS_KEY,
+    secretAccessKey: AWS_SECRET
+});
+const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 
 exports.createPost = async (req, res) => {
-    const {title, content, category, author} = req.body
+    const {title, content, category, author, isBreaking} = req.body
     if (title && content && req.files) {
         try {
             let image = req.files.find(file => file.fieldname === 'image').location;
             let thumbnail = req.files.find(file => file.fieldname === 'thumbnail').location
-            let postUpdate = await this.persistPostInDBAndCache(title, content, image, thumbnail, category, author)
+            let url = await this.convertToHyphenatedLowercase(title)
+            let postUpdate = await this.persistPostInDBAndCache(title, content, image, thumbnail, category, author, url, isBreaking)
             res.status(200);
             res.json({
                 message: postUpdate._id
             })
         } catch (error) {
             logger.error(error)
-            if (error.message.includes('Cannot read property')) {
-                logger.warn('caching process failed')
-                res.status(200);
-                res.json({
-                    result: result
-                })
-            } else {
-                res.status(500);
-                res.json({
-                    message: "something went wrong"
-                })
-            }
+            res.status(500);
+            res.json({
+                message: "something went wrong"
+            })
         }
     } else {
         res.status(400);
@@ -117,7 +121,7 @@ exports.getPosts = async (req, res) => {
 
 };
 
-exports.persistPostInDBAndCache = async (title, content, image, thumbnail, category, author) => {
+exports.persistPostInDBAndCache = async (title, content, image, thumbnail, category, author, url, isBreaking = false) => {
     try {
         const postObject = await Post.create({
             title,
@@ -126,25 +130,16 @@ exports.persistPostInDBAndCache = async (title, content, image, thumbnail, categ
             thumbnail,
             category,
             author,
+            url,
+            isBreaking,
             timestamp: new Date()
         })
         let postUpdate = await postObject.save();
         logger.info(`post ${postUpdate._id} saved in the DB successfully`)
-        logger.info(`post ${postUpdate._id} saving to cache`)
-        let postKey = postUpdate._id + 'blogpost'
-        await redisClient.set(postKey, JSON.stringify({
-            title,
-            content,
-            image: image,
-            thumbnail: thumbnail,
-            category,
-            author,
-            timestamp: new Date()
-        }), {
-            ex: 120,
-            NX: true
-        })
-        logger.info(`post ${postUpdate._id} successfully saved to cache`)
+        if (isBreaking) {
+            await BreakingPost.updateOne({}, {post: postUpdate._id}, {upsert: true});
+            logger.info(`post ${postUpdate._id} set as breaking`)
+        }
     } catch (error) {
         logger.info(error)
     }
