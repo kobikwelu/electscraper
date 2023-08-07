@@ -266,7 +266,7 @@ const deleteUser = async (email) => {
  * @returns {Promise<void>}
  */
 exports.signUp = async (req, res) => {
-    const {email, role, password, name, financialQuestionnaires} = req.body;
+    const {email, role, password, name, financialQuestionnaires, isGoogleAuth = false} = req.body;
     const unHashedPassword = password;
 
     if (email && role && unHashedPassword && name && financialQuestionnaires) {
@@ -297,6 +297,7 @@ exports.signUp = async (req, res) => {
                     name,
                     role,
                     profile,
+                    isGoogleAuth,
                     tier: 'BASIC_UNREGISTERED',
                     emailActivationToken: uuid(),
                     emailActivationTokenExpiryDate: await expiresInV3(2880)
@@ -304,13 +305,15 @@ exports.signUp = async (req, res) => {
                 logger.info('user instance created ')
                 await user.save();
                 logger.info('user instance saved ')
-                const activationLink = `${keys.Origin_backend}/api/v1/user/activateAccount/${user.emailActivationToken}&email=${user.email}`;
-                logger.info('activation link created')
-                await notificationController.sendEmailMessage(user, {
-                    subject: ResponseTypes.SUCCESS.MESSAGES.REGISTRATION_CONFIRM,
-                    activationLink
-                });
-                logger.info('notification sent to user ' + user._id)
+                if (!isGoogleAuth) {
+                    const activationLink = `${keys.Origin_backend}/api/v1/user/activateAccount/${user.emailActivationToken}&email=${user.email}`;
+                    logger.info('activation link created')
+                    await notificationController.sendEmailMessage(user, {
+                        subject: ResponseTypes.SUCCESS.MESSAGES.REGISTRATION_CONFIRM,
+                        activationLink
+                    });
+                    logger.info('notification sent to user ' + user._id)
+                }
                 res.json({
                     message: ResponseTypes.SUCCESS.MESSAGES.SUBSCRIPTION_PENDING,
                     user: {
