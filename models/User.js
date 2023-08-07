@@ -84,6 +84,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    isGoogleAuth: {
+        type: Boolean,
+        default: false,
+    },
     isAccountActive: {
         type: Boolean,
         default: false,
