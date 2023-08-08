@@ -305,6 +305,17 @@ exports.signUp = async (req, res) => {
                 logger.info('user instance created ')
                 await user.save();
                 logger.info('user instance saved ')
+                 user = await User.findOne({}).byEmail(email);
+                if (isGoogleAuth){
+                    user.isEmailConfirmed = true;
+                    logger.info('setting isEmailConfirmed to true')
+                    user.isAccountActive = true;
+                    logger.info('setting isAccountActive to true')
+                    user.tier = 'BASIC_REGISTERED'
+                    logger.info('setting tier to basic_registered')
+                    await user.save();
+                    logger.info('updating the account as a google auth')
+                }
                 if (!isGoogleAuth) {
                     const activationLink = `${keys.Origin_backend}/api/v1/user/activateAccount/${user.emailActivationToken}&email=${user.email}`;
                     logger.info('activation link created')

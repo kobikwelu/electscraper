@@ -8,10 +8,10 @@ const userSchema = new mongoose.Schema({
     role: String,
     tier: {
         type: String,
-        required: [true, 'account tier is required - it must be BASIC_UNREGISTERED | BASIC_REGISTERED | TEAM | ENTERPRISE'],
+        required: [true, 'account tier is required - it must be BASIC_UNREGISTERED | BASIC_REGISTERED | TEAM | ENTERPRISE | SUPER_ADMIN'],
         validate: [{
             validator: (value) => {
-                const tierRegex = /\b(?:BASIC_UNREGISTERED|BASIC_REGISTERED|TEAM|ENTERPRISE)\b/
+                const tierRegex = /\b(?:BASIC_UNREGISTERED|BASIC_REGISTERED|TEAM|ENTERPRISE|SUPER_ADMIN)\b/
                 return tierRegex.test(value);
             },
             message: props => `${props.value} is not a valid account tier - it must be basic | team | enterprise`
