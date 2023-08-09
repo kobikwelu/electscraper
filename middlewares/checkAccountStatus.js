@@ -1,5 +1,6 @@
 const ResponseTypes = require('../constants/ResponseTypes');
 const {authController} = require('../controllers');
+const User = require('../models/User');
 
 
 /**
@@ -12,11 +13,17 @@ const {authController} = require('../controllers');
  * @returns {Promise<void>}
  */
 const checkAccountStatus = async (req, res, next) => {
+    let user;
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
     logger.info('key ' + key)
+    user = await User.findOne({}).byEmail(key);
     const accountStateErrors = await authController.getAccountState(key);
     if (accountStateErrors.description === ResponseTypes.SUCCESS.BUSINESS_NOTIFICATION.EMAIL_CONFIRMATION_STILL_PENDING) {
-        return buildAccountStatusMessage(accountStateErrors, res)
+        if (user.isOnBoardingComplete){
+            return buildAccountStatusMessage(accountStateErrors, res)
+        } else {
+            next()
+        }
     } else if (accountStateErrors.code === 'ACCOUNT_LIMIT') {
         return buildAccountStatusMessage(accountStateErrors, res)
     } else {

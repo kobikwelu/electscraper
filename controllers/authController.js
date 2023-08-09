@@ -620,6 +620,7 @@ exports.getUser = async (req, res) => {
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    isOnBoardingComplete: user.isOnBoardingComplete,
                     subscriptionPlan: user.subscriptionPlan,
                     isEmailConfirmed: user.isEmailConfirmed,
                     lastCheckInTime: user.lastCheckInTime,
@@ -724,7 +725,8 @@ exports.updateUser = async (req, res) => {
         'address',
         'tier',
         'financialQuestionnaires',
-        'isNewAdvisoryNeeded'
+        'isNewAdvisoryNeeded',
+        'isOnBoardingComplete'
     ];
     try {
         const user = await User.findOne({}).byEmail(key);

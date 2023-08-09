@@ -41,13 +41,15 @@ const ResponseTypes = {
         },
         BUSINESS_NOTIFICATION : {
             EMAIL_CONFIRMATION_STILL_PENDING: 'Your account is not yet verified. ' +
-                'Please click the link to receive a new confirmation email'
+                ' Check your inbox or spam folder to find the email you received while registering ' +
+                ' If you cannot find it, please click the link below to get your confirmation email '
         },
         ADS:{
-            loading_message: 'Once your recommendation is ready, this button would be enabled and you can click to see them',
+            loading_message: 'Once your recommendation is ready, this button would be enabled and you can click to see them. ',
             ads_message: 'While we curate your personalized app recommendations, ' +
                 'please browse these sponsored options that might interest you. ' +
-                'Your unique selection will be ready in a jiffy - thank you for your patience! '
+                'Your unique selection will be ready in a jiffy - thank you for your patience! ' +
+                'for support or inquiries, contact support@tallyng.com'
         }
     }
 }
