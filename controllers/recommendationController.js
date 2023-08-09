@@ -126,6 +126,7 @@ exports.appList = async (req, res) => {
             let appsHistory = []
 
             financialRecommendationsList.forEach(recommendation => {
+                result.yourRecommendations.advisory = recommendation.advisory
                 recommendation.productList.forEach(product => {
                     appsHistory.push(product);
                 });
