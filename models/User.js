@@ -96,6 +96,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    isOnBoardingComplete: {
+        type: Boolean,
+        default: false,
+    },
     accountState: {
         disabled: {
             isDisabled: {
