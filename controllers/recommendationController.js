@@ -169,6 +169,7 @@ exports.appList = async (req, res) => {
 
             result.mostSaves.count = financialProductGuideSavesList.length
             result.mostSaves.savesList = await buildFinancialGuideWithMetaData(financialProductGuideSavesList, key)
+/*
 
 //self saves
             const financialProductGuideSelfSavesList = await FinancialProductGuide
@@ -192,6 +193,19 @@ exports.appList = async (req, res) => {
 
             result.history.signups.count = financialProductGuideSelfSignupList.length
             result.history.signups.selfSignupList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSignupList, key)
+*/
+
+            //self save
+            let user =  await User.findOne({}).byEmail(key)
+            const selfSaveList = user.appsHistory.filter(item => item.type === 'save');
+            result.history.saves.count = selfSaveList.length
+            result.history.saves.selfSavesList = selfSaveList
+
+            //self signups
+            const signupList = user.appsHistory.filter(item => item.type === 'signup');
+            result.history.signups.count = signupList.length
+            result.history.signups.selfSignupList = signupList
+
 
             res.status(200)
             res.send({
@@ -215,7 +229,8 @@ exports.appList = async (req, res) => {
 
 
 exports.trackUserInteractions = async (req, res) => {
-    const {business_name, action, actionGroup} = req.body; // actionGroup is either 'group' or 'self'
+    const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
+    const {business_name, action, actionGroup, activity} = req.body; // actionGroup is either 'group' or 'self'
     const allowedKeys = [
         'likes',
         'saves',
@@ -239,6 +254,13 @@ exports.trackUserInteractions = async (req, res) => {
             financialProduct[actionGroup][action] += 1;
             logger.info('updating action')
             await financialProduct.save();
+
+            if (actionGroup === 'self'){
+                const user = await User.findOne({}).byEmail(key);
+                user.appsHistory = activity
+                await user.save()
+                logger.info('updating user profile with their latest app activity')
+            }
             logger.info('action logged successfully')
             res.status(200).json({
                 message: "success"

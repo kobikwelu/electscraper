@@ -18,6 +18,6 @@ router.get('/', [checkJwt, checkAccountStatus], recommendationController.getLate
 
 router.get('/tray',[checkJwt, checkAccountStatus],  recommendationController.appList)
 
-router.post('/trackuserinteraction', recommendationController.trackUserInteractions)
+router.post('/trackuserinteraction', [checkJwt, checkAccountStatus], recommendationController.trackUserInteractions)
 
 module.exports = router;
