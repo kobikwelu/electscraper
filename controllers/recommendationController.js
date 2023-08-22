@@ -71,7 +71,6 @@ exports.recommendation = async (req, res) => {
 exports.getLatestRecommendation = async (req, res) => {
     const email = req.headers['email'];
 
-
     if (email) {
         try {
             let recommendation = await FinancialRecommendation.findOne({
@@ -169,31 +168,6 @@ exports.appList = async (req, res) => {
 
             result.mostSaves.count = financialProductGuideSavesList.length
             result.mostSaves.savesList = await buildFinancialGuideWithMetaData(financialProductGuideSavesList, key)
-/*
-
-//self saves
-            const financialProductGuideSelfSavesList = await FinancialProductGuide
-                .find({"self.saves": {$gt: 0}})
-                .select('-group.signups -group.likes -group.saves -self.signups')
-                .sort({"self.saves": -1})
-                .limit(mostSavesPercentile)
-                .exec();
-
-            result.history.saves.count = financialProductGuideSelfSavesList.length
-            result.history.saves.selfSavesList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSavesList, key)
-
-//self signups
-
-            const financialProductGuideSelfSignupList = await FinancialProductGuide
-                .find({"self.signups": {$gt: 0}})
-                .select('-group.signups -group.likes -group.saves -self.saves')
-                .sort({"self.signups": -1})
-                .limit(mostSavesPercentile)
-                .exec();
-
-            result.history.signups.count = financialProductGuideSelfSignupList.length
-            result.history.signups.selfSignupList = await buildFinancialGuideWithMetaData(financialProductGuideSelfSignupList, key)
-*/
 
             //self save
             let user =  await User.findOne({}).byEmail(key)
@@ -230,7 +204,7 @@ exports.appList = async (req, res) => {
 
 exports.trackUserInteractions = async (req, res) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
-    const {business_name, action, actionGroup, activity} = req.body; // actionGroup is either 'group' or 'self'
+    const {group_nomination_business_name, action, actionGroup, activity} = req.body;
     const allowedKeys = [
         'likes',
         'saves',
@@ -240,31 +214,36 @@ exports.trackUserInteractions = async (req, res) => {
         'group',
         'self'
     ];
-    if (business_name && action && actionGroup && allowedKeys.includes(action) && allowedGroups.includes(actionGroup)) {
+    if (group_nomination_business_name && action && actionGroup && allowedKeys.includes(action) && allowedGroups.includes(actionGroup)) {
         logger.info('has required information')
 
         try {
-            const financialProduct = await FinancialProductGuide.findOne({business_name});
+            const financialProduct = await FinancialProductGuide.findOne({"business_name": group_nomination_business_name});
             if (!financialProduct) {
                 res.status(404).json({
                     message: "Missing required values"
                 });
-            }
-            // increment the corresponding attribute
-            financialProduct[actionGroup][action] += 1;
-            logger.info('updating action')
-            await financialProduct.save();
+            } else { // increment the corresponding attribute
+                financialProduct[actionGroup][action] += 1;
+                logger.info('updating action')
+                await financialProduct.save();
 
-            if (actionGroup === 'self'){
-                const user = await User.findOne({}).byEmail(key);
-                user.appsHistory = activity
-                await user.save()
-                logger.info('updating user profile with their latest app activity')
+                if (actionGroup === 'self'){
+                    const user = await User.findOne({}).byEmail(key);
+                    if (user.appsHistory) {
+                        user.appsHistory.push(activity);
+                    } else {
+                        user.appsHistory = [activity];
+                    }
+                    await user.save()
+                    logger.info('updating user profile with their latest app activity')
+                }
+                logger.info('action logged successfully')
+                res.status(200).json({
+                    message: "success"
+                })
             }
-            logger.info('action logged successfully')
-            res.status(200).json({
-                message: "success"
-            });
+
         } catch (error) {
             logger.error(error)
             res.status(500).json({
@@ -277,7 +256,6 @@ exports.trackUserInteractions = async (req, res) => {
         })
     }
 }
-
 
 const buildFinancialGuideWithMetaData = async (financialProductGuides, email) => {
     let guidesWithMeta = [];
@@ -319,50 +297,6 @@ const buildFinancialGuideWithMetaData = async (financialProductGuides, email) =>
         logger.error(error);
         return null
     }
-}
-
-const formatLeaderShipTeam_deprecated = async (input) => {
-    // Regular expression to match each item enclosed in brackets
-    const regex = /\[([^\]]+)\]/g;
-
-    let match;
-    let result = [];
-
-    // Regular expression to match the URL in each item
-    const urlRegex = /(http[s]?:\/\/[^ ]+)/;
-
-    // While there is a match in the input string
-    while ((match = regex.exec(input)) !== null) {
-        const personString = match[1]; // Get the matched string
-
-        // Extract the URL from the string
-        const urlMatch = personString.match(urlRegex);
-
-        // If a URL was found
-        if (urlMatch !== null) {
-            const url = urlMatch[0];
-
-            // Remove the URL from the personString
-            const name = personString.replace(url, '').trim();
-
-            // Build the object
-            let personObject = {
-                name,
-                link: url
-            };
-
-            // Add the object to the result array
-            result.push(personObject);
-        } else {
-            // If there was no URL, treat the entire string as the name
-            result.push({
-                name: personString.trim(),
-                link: ''
-            });
-        }
-    }
-
-    return result;
 }
 
 const formatLeaderShipTeam = async (input)=>{
