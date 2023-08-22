@@ -8,11 +8,15 @@ const postSchema = new mongoose.Schema({
     title: String,
     content: String,
     image: String,
-    thumbnail: String,
     timestamp: String,
     category: String,
     author: String,
-    url: String
+    url: String,
+    imageCopyright: String,
+    isBreakingNews: {
+        type: Boolean,
+        default: false,
+    }
 });
 
 

@@ -8,8 +8,9 @@
     "node": "16.x.x"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.397.0",
     "async": "^3.2.0",
-    "aws-sdk": "^2.656.0",
+    "aws-sdk": "^2.1442.0",
     "axios": "^0.20.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
