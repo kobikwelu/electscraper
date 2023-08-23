@@ -30,6 +30,7 @@ const ResponseTypes = {
         200 : 'Success',
         MESSAGES: {
             SUBSCRIPTION_PENDING: 'Thanks for signing up for Tally! Check your email inbox (or spam/junk) to find our invitation ',
+            SUBSCRIPTION_NOT_PENDING: 'Thanks for signing up for Tally!',
             SUBSCRIPTION_SUCCESS: 'You have successfully confirmed your Tally subscription',
             REGISTRATION_CONFIRM: 'Welcome to Tally ',
             PASSWORD_RESET_INITIAL: 'You requested for a password change',

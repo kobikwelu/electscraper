@@ -11,10 +11,21 @@ const userSchema = new mongoose.Schema({
         required: [true, 'account tier is required - it must be BASIC_UNREGISTERED | BASIC_REGISTERED | TEAM | ENTERPRISE | SUPER_ADMIN'],
         validate: [{
             validator: (value) => {
-                const tierRegex = /\b(?:BASIC_UNREGISTERED|BASIC_REGISTERED|TEAM|ENTERPRISE|SUPER_ADMIN)\b/
+                const tierRegex = /\b(?:BASIC_UNREGISTERED|BASIC_REGISTERED|TEAM|ENTERPRISE)\b/
                 return tierRegex.test(value);
             },
             message: props => `${props.value} is not a valid account tier - it must be basic | team | enterprise`
+        }]
+    },
+    entitlements: {
+        type: String,
+        required: [true, 'entitlement is required - it must be one of the following options ALL | USER_APP | CONTENT_CREATOR '],
+        validate: [{
+            validator: (value) => {
+                const tierRegex = /\b(?:ALL|USER_APP|CONTENT_CREATOR)\b/
+                return tierRegex.test(value);
+            },
+            message: props => `${props.value} is not a valid account tier - it must be ALL | USER_APP | CONTENT_CREATOR`
         }]
     },
     subscriptionPlan: {
