@@ -269,6 +269,7 @@ exports.signUp = async (req, res) => {
     const {email, role, password, name, financialQuestionnaires, isGoogleAuth = false} = req.body;
     const unHashedPassword = password;
 
+
     if (email && role && unHashedPassword && name && financialQuestionnaires) {
         let user = null;
         try {
@@ -300,6 +301,7 @@ exports.signUp = async (req, res) => {
                     isGoogleAuth,
                     tier: 'BASIC_UNREGISTERED',
                     emailActivationToken: uuid(),
+                    entitlements: 'USER_APP',
                     emailActivationTokenExpiryDate: await expiresInV3(2880)
                 })
                 logger.info('user instance created ')
@@ -325,6 +327,7 @@ exports.signUp = async (req, res) => {
                     });
                     logger.info('notification sent to user ' + user._id)
                 }
+
                 res.json({
                     message: ResponseTypes.SUCCESS.MESSAGES.SUBSCRIPTION_PENDING,
                     user: {
@@ -620,6 +623,7 @@ exports.getUser = async (req, res) => {
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    entitlements: user.entitlements,
                     isOnBoardingComplete: user.isOnBoardingComplete,
                     subscriptionPlan: user.subscriptionPlan,
                     isEmailConfirmed: user.isEmailConfirmed,
