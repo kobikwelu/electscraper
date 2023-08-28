@@ -6,7 +6,8 @@ exports.createPost = async (req, res) => {
     if (title && content && category && author && isBreakingNews && imageCopyright && req.files) {
         try {
             let image = req.files.find(file => file.fieldname === 'image').location;
-            await this.persistPostInDBAndCache(title, content, image, category, author, imageCopyright, isBreakingNews)
+            let url = await this.convertToHyphenatedLowercase(title)
+            await this.persistPostInDBAndCache(title, content, image, category, author, url, imageCopyright, isBreakingNews)
             res.status(200);
             res.json({
                 message: 'success'
@@ -108,7 +109,7 @@ exports.getPosts = async (req, res) => {
 
 };
 
-exports.persistPostInDBAndCache = async (title, content, image, category, author, imageCopyright, isBreakingNews = false) => {
+exports.persistPostInDBAndCache = async (title, content, image, category, author, url, imageCopyright, isBreakingNews = false) => {
     try {
         const postObject = await Post.create({
             title,
@@ -116,6 +117,7 @@ exports.persistPostInDBAndCache = async (title, content, image, category, author
             image,
             category,
             author,
+            url,
             imageCopyright,
             isBreakingNews,
             timestamp: new Date()
