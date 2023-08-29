@@ -19,6 +19,8 @@ router.get('/post', postController.getPost);
 
 router.get('/posts', postController.getPosts);
 
+router.get('/post/categories', checkJwt, postController.getCategories);
+
 router.post('/post', [checkJwt, upload.array('image')], postController.createPost);
 
 module.exports = router;
