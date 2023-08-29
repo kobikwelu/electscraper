@@ -138,26 +138,10 @@ exports.persistPostInDBAndCache = async (title, content, image, category, author
             author,
             url,
             imageCopyright,
-            isBreakingNews,
-            timestamp: new Date()
+            isBreakingNews
         })
         let postUpdate = await postObject.save();
         logger.info(`post ${postUpdate._id} saved in the DB successfully`)
-        /*        logger.info(`post ${postUpdate._id} saving to cache`)
-                let postKey = postUpdate._id + 'blogpost'
-                await redisClient.set(postKey, JSON.stringify({
-                    title,
-                    content,
-                    image: image,
-                    thumbnail: thumbnail,
-                    category,
-                    author,
-                    timestamp: new Date()
-                }), {
-                    ex: 120,
-                    NX: true
-                })
-                logger.info(`post ${postUpdate._id} successfully saved to cache`)*/
     } catch (error) {
         logger.info(error)
     }
