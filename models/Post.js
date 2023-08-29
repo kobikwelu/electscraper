@@ -8,7 +8,7 @@ const postSchema = new mongoose.Schema({
     title: String,
     content: String,
     image: String,
-    timestamp: String,
+    timestamp: { type: Date, default: Date.now },  // Updated this line
     category: String,
     author: String,
     url: String,
