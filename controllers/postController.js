@@ -1,4 +1,5 @@
 const Post = require('../models/Post');
+const Category = require('../models/Category');
 
 exports.createPost = async (req, res) => {
     const {title, content, category, author, imageCopyright, isBreakingNews} = req.body
@@ -107,6 +108,24 @@ exports.getPosts = async (req, res) => {
         })
     }
 
+};
+
+exports.getCategories = async (req, res) => {
+    try {
+        let categories = await Category.find({})
+            .select('-_id')
+            .exec()
+        res.status(200);
+        res.json({
+            categories
+        })
+    } catch (error) {
+        logger.error(error)
+        res.status(500);
+        res.json({
+            message: "something went wrong"
+        })
+    }
 };
 
 exports.persistPostInDBAndCache = async (title, content, image, category, author, url, imageCopyright, isBreakingNews = false) => {
