@@ -17,7 +17,7 @@ const  { chargePerRequest }   = require('../../../middlewares/chargePerRequest')
 router.post('/register', authController.signUp);
 router.post('/login', authController.signIn);
 
-router.post('/resendActivationEmail', [checkJwt, checkAccountStatus],authController.reSendActivationEmail)
+router.post('/resendActivationEmail', checkJwt, authController.reSendActivationEmail)
 
 
 router.get('/activateAccount/:uuid', authController.verifyActivationEmail);
