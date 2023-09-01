@@ -225,6 +225,7 @@ exports.trackUserInteractions = async (req, res) => {
                 });
             } else { // increment the corresponding attribute
                 financialProduct[actionGroup][action] += 1;
+                financialProduct['group'][action] += 1;
                 logger.info('updating action')
                 await financialProduct.save();
 
