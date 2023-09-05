@@ -70,6 +70,67 @@ exports.getPost = async (req, res) => {
 
 };
 
+exports.editPost = async (req, res) => {
+    const { _id, title, ...updateData } = req.body;
+
+    if (_id && title) {
+        try {
+            const post = await Post.findById(_id);
+            if (!post) {
+                return res.status(404).json({ message: 'Post not found' });
+            }
+
+            const updatedPost = await Post.findByIdAndUpdate(_id, updateData, { new: true });
+            res.status(200);
+            res.json({
+                updatedPost
+            })
+        } catch (error) {
+            logger.error(error)
+            res.status(500);
+            res.json({
+                message: "something went wrong"
+            })
+        }
+    } else {
+        res.status(400);
+        res.json({
+            message: "Missing required values. Id is required"
+        })
+    }
+
+};
+
+exports.deletePost = async (req, res) => {
+    const { _id } = req.body;
+
+    if ( _id ) {
+        try {
+            const post = await Post.findById(_id);
+            if (!post) {
+                return res.status(404).json({ message: 'Post not found' });
+            }
+            await Post.findByIdAndDelete(_id);
+            res.status(200);
+            res.json({
+                message: 'Post deleted successfully'
+            })
+        } catch (error) {
+            logger.error(error)
+            res.status(500);
+            res.json({
+                message: "something went wrong"
+            })
+        }
+    } else {
+        res.status(400);
+        res.json({
+            message: "Missing required values. Id is required"
+        })
+    }
+
+};
+
 exports.getPosts = async (req, res) => {
     const page = req.headers['page'];
     const category = req.headers['category'];
