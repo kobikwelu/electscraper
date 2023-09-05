@@ -17,6 +17,10 @@ const {checkJwt} = require("../../../middlewares/checkJwt");
 
 router.get('/post', postController.getPost);
 
+router.patch('/post', postController.editPost);
+
+router.delete('/post', postController.deletePost);
+
 router.get('/posts', postController.getPosts);
 
 router.get('/post/categories', checkJwt, postController.getCategories);
