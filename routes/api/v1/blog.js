@@ -17,14 +17,14 @@ const {checkJwt} = require("../../../middlewares/checkJwt");
 
 router.get('/post', postController.getPost);
 
-router.patch('/post', postController.editPost);
+router.patch('/post', [checkJwt, upload.upload.array('image')], postController.editPost);
 
-router.delete('/post', postController.deletePost);
+router.delete('/post', [checkJwt, upload.upload.array('image')], postController.deletePost);
 
 router.get('/posts', postController.getPosts);
 
 router.get('/post/categories', checkJwt, postController.getCategories);
 
-router.post('/post', [checkJwt, upload.array('image')], postController.createPost);
+router.post('/post', [checkJwt, upload.upload.array('image')], postController.createPost);
 
 module.exports = router;
