@@ -23,4 +23,3 @@ exports.sendEmailMessage = async (subscriber, payload, isBulkEmail = false) => {
         console.log(error);
     }
 }
-
