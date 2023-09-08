@@ -19,13 +19,13 @@ const userSchema = new mongoose.Schema({
     },
     entitlements: {
         type: String,
-        required: [true, 'entitlement is required - it must be one of the following options ALL | USER_APP | CONTENT_CREATOR '],
+        required: [true, 'entitlement is required - it must be one of the following options ALL | USER_APP | CONTENT_CREATOR | CONTENT_EDITOR '],
         validate: [{
             validator: (value) => {
-                const tierRegex = /\b(?:ALL|USER_APP|CONTENT_CREATOR)\b/
+                const tierRegex = /\b(?:ALL|USER_APP|CONTENT_CREATOR|CONTENT_EDITOR)\b/
                 return tierRegex.test(value);
             },
-            message: props => `${props.value} is not a valid account tier - it must be ALL | USER_APP | CONTENT_CREATOR`
+            message: props => `${props.value} is not a valid account tier - it must be ALL | USER_APP | CONTENT_CREATOR | CONTENT_EDITOR`
         }]
     },
     subscriptionPlan: {

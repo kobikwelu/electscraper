@@ -231,13 +231,25 @@ exports.trackUserInteractions = async (req, res) => {
 
                 if (actionGroup === 'self'){
                     const user = await User.findOne({}).byEmail(key);
-                    if (user.appsHistory) {
-                        user.appsHistory.push(activity);
-                    } else {
-                        user.appsHistory = [activity];
+                    if (user) {
+                        // Check if activity with the same type and app.business_name already exists in user.appsHistory
+                        const existingActivity = user.appsHistory.find(histActivity =>
+                            histActivity.type === activity.type &&
+                            histActivity.app.business_name === activity.app.business_name
+                        );
+
+                        if (!existingActivity) {
+                            if (user.appsHistory) {
+                                user.appsHistory.push(activity);
+                            } else {
+                                user.appsHistory = [activity];
+                            }
+                            await user.save()
+                            logger.info('updating user profile with their latest app activity')
+                        } else {
+                            logger.info('activity already exists, not saving');
+                        }
                     }
-                    await user.save()
-                    logger.info('updating user profile with their latest app activity')
                 }
                 logger.info('action logged successfully')
                 res.status(200).json({
@@ -257,6 +269,7 @@ exports.trackUserInteractions = async (req, res) => {
         })
     }
 }
+
 
 const buildFinancialGuideWithMetaData = async (financialProductGuides, email) => {
     let guidesWithMeta = [];
