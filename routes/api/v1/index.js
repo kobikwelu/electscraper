@@ -1,22 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const electionResultRouter = require('./electionResult');
-const electionNameRouter = require('./electionName');
-const votingResultPerPURouter = require('./votingResultPerPU');
-const votingResultPerGEORouter = require('./votingResultPerGEO');
-const pollingUnitRouter = require('./pollingUnit');
-const wardRouter = require('./ward');
-const lgaRouter = require('./lga');
-const stateRouter = require('./state');
-const collationRouter = require('./collation');
 const recommendationRouter = require('./recommendation');
 const statusRouter = require('./status');
-
 const blogRouter = require('./blog');
-
-const districtRouter = require('./district');
-
 const userRouter = require('./user');
 
 /**
@@ -26,19 +13,6 @@ const userRouter = require('./user');
  *
  */
 
-router.use('/electionResult', electionResultRouter);
-router.use('/votingResultPerPU', votingResultPerPURouter);
-router.use('/votingResultPerGEO', votingResultPerGEORouter);
-router.use('/pollingUnit', pollingUnitRouter);
-router.use('/electionName', electionNameRouter);
-router.use('/collation', collationRouter);
-
-router.use('/ward', wardRouter);
-router.use('/lga', lgaRouter);
-
-router.use('/state', stateRouter);
-
-router.use('/district', districtRouter);
 
 router.use('/user', userRouter)
 
