@@ -202,63 +202,6 @@ exports.appList = async (req, res) => {
 };
 
 
-exports.trackUserInteractions_deprecated = async (req, res) => {
-    const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
-    const {group_nomination_business_name, action, actionGroup, activity} = req.body;
-    const allowedKeys = [
-        'likes',
-        'saves',
-        'signups'
-    ];
-    const allowedGroups = [
-        'group',
-        'self'
-    ];
-    if (group_nomination_business_name && action && actionGroup && allowedKeys.includes(action) && allowedGroups.includes(actionGroup)) {
-        logger.info('has required information')
-
-        try {
-            const financialProduct = await FinancialProductGuide.findOne({"business_name": group_nomination_business_name});
-            if (!financialProduct) {
-                res.status(404).json({
-                    message: "Missing required values"
-                });
-            } else { // increment the corresponding attribute
-                financialProduct[actionGroup][action] += 1;
-                financialProduct['group'][action] += 1;
-                logger.info('updating action')
-                await financialProduct.save();
-
-                if (actionGroup === 'self'){
-                    const user = await User.findOne({}).byEmail(key);
-                    if (user.appsHistory) {
-                        user.appsHistory.push(activity);
-                    } else {
-                        user.appsHistory = [activity];
-                    }
-                    await user.save()
-                    logger.info('updating user profile with their latest app activity')
-                }
-                logger.info('action logged successfully')
-                res.status(200).json({
-                    message: "success"
-                })
-            }
-
-        } catch (error) {
-            logger.error(error)
-            res.status(500).json({
-                message: "something went wrong"
-            });
-        }
-    } else {
-        res.status(400).json({
-            message: "Missing required values or action must be one of likes | saves | signups and actionGroup must be one of group | self"
-        })
-    }
-}
-
-
 exports.trackUserInteractions = async (req, res) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
     const {group_nomination_business_name, action, actionGroup, activity} = req.body;
