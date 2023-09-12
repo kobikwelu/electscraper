@@ -88,6 +88,7 @@ exports.getPost = async (req, res) => {
 exports.editPost = async (req, res) => {
     const { _id, title, content, category, author, imageCopyright, isBreakingNews } = req.body;
     const trimmedTitle = title ? title.trimEnd() : null;
+    let url = await this.convertToHyphenatedLowercase(trimmedTitle);
 
     if (_id && trimmedTitle) {
         try {
@@ -100,6 +101,7 @@ exports.editPost = async (req, res) => {
                 title: trimmedTitle,
                 content,
                 category,
+                url,
                 author,
                 imageCopyright,
                 isBreakingNews  // Directly using as a boolean
