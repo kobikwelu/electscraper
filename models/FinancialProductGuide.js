@@ -26,6 +26,6 @@ const financialProductGuideSchema = new mongoose.Schema({
 
 
 
-const FinancialProductGuide = db.model('FinancialProductGuide', financialProductGuideSchema);
+const FinancialProductGuide = db.model('FinancialProductGuidetest', financialProductGuideSchema);
 
 module.exports = FinancialProductGuide;
