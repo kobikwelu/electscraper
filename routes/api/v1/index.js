@@ -5,6 +5,7 @@ const recommendationRouter = require('./recommendation');
 const statusRouter = require('./status');
 const blogRouter = require('./blog');
 const userRouter = require('./user');
+const updatefpguideRouter = require('./updatefpguide');
 
 /**
  * v1 master route. All api's must have a pattern and be inserted here
@@ -19,6 +20,8 @@ router.use('/user', userRouter)
 router.use('/blog', blogRouter)
 
 router.use('/recommendation', recommendationRouter)
+
+router.use('/updatefpguide', updatefpguideRouter)
 
 router.use('/status', statusRouter)
 
