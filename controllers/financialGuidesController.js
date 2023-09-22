@@ -33,6 +33,12 @@ exports.insertFinancialApps = async (req, res) => {
 
         for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
             const row = worksheet.getRow(rowNumber);
+            const businessName = row.getCell(columns.indexOf('business_name') + 1).value;
+
+            if (!businessName) {
+                continue;  // Skip rows without a business name
+            }
+
             const rowData = {};
 
             for (let colNumber = 1; colNumber <= columns.length; colNumber++) {
@@ -41,13 +47,6 @@ exports.insertFinancialApps = async (req, res) => {
                 if (cell.value && cell.value.text && cell.value.hyperlink) {
                     rowData[columns[colNumber - 1]] = cell.value.text;
                 } else if (columns[colNumber - 1] === 'logo') {
-                    const businessName = row.getCell(columns.indexOf('business_name') + 1).value;
-
-                    if (!businessName) {
-                       //do nothing
-                        continue;
-                    }
-
                     const sanitizedBusinessName = businessName.replace(/[^a-zA-Z0-9]/g, '_');
                     const s3ImagePath = `${sanitizedBusinessName}.png`;
                     try {
@@ -84,7 +83,6 @@ exports.insertFinancialApps = async (req, res) => {
         res.status(500).json({ message: "something went wrong" });
     }
 };
-
 
 
 
