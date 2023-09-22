@@ -1,6 +1,5 @@
 const Post = require('../models/Post');
-const FinancialProductGuide = require('../models/FinancialProductGuide');
-const Category = require('../models/Category');
+const FinancialProductGuideV2 = require('../models/FinancialProductGuideV2');
 const { DeleteObjectCommand, PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const config = require('../config')
 const ExcelJS = require('exceljs');
@@ -34,18 +33,22 @@ exports.insertFinancialApps = async (req, res) => {
 
         for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
             const row = worksheet.getRow(rowNumber);
+            const businessName = row.getCell(columns.indexOf('business_name') + 1).value;
+
+            if (!businessName) {
+                continue;  // Skip rows without a business name
+            }
+
             const rowData = {};
 
             for (let colNumber = 1; colNumber <= columns.length; colNumber++) {
                 const cell = row.getCell(colNumber);
 
                 if (cell.value && cell.value.text && cell.value.hyperlink) {
-                    rowData[columns[colNumber - 1]] = cell.value.text; // or cell.value.hyperlink
+                    rowData[columns[colNumber - 1]] = cell.value.text;
                 } else if (columns[colNumber - 1] === 'logo') {
-                    const businessName = row.getCell(columns.indexOf('business_name') + 1).value;
-                    const sanitizedBusinessName = businessName.replace(/[^a-zA-Z0-9]/g, '_'); // This replaces non-alphanumeric characters with underscore
+                    const sanitizedBusinessName = businessName.replace(/[^a-zA-Z0-9]/g, '_');
                     const s3ImagePath = `${sanitizedBusinessName}.png`;
-
                     try {
                         // Check if the image exists in S3
                         await s3Client.send(new HeadObjectCommand({
@@ -67,7 +70,7 @@ exports.insertFinancialApps = async (req, res) => {
         }
 
         // Save the data to MongoDB
-        await FinancialProductGuide.insertMany(data);
+        await FinancialProductGuideV2.insertMany(data);
 
         await s3Client.send(new DeleteObjectCommand({
             Bucket: config.aws.AWS_BUCKET,
