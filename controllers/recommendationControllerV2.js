@@ -1,13 +1,12 @@
 const config = require('../config');
-const axios = require('axios');
-const API_URL = 'https://api.openai.com/v1/chat/completions';
+
 const User = require('../models/User')
-const FinancialProductGuide = require('../models/FinancialProductGuide')
+//const FinancialProductGuide = require('../models/FinancialProductGuide')
 const FinancialProductGuideV2 = require('../models/FinancialProductGuideV2')
 const ProductGuidesMeta = require('../models/ProductGuidesMeta')
 const FinancialRecommendation = require('../models/FinancialRecommendation')
 const financialAdvisoryKeywords = require('../constants/FinancialAdvisoryKeywords')
-const responseTypes = require('../constants/ResponseTypes')
+
 
 const AWS = require('aws-sdk');
 AWS.config.update({
@@ -16,92 +15,12 @@ AWS.config.update({
     secretAccessKey: config.aws.AWS_SECRET
 });
 
-const sqs = new AWS.SQS();
-const queueUrl = config.sqs.sqs_url
 
-exports.recommendation = async (req, res) => {
-    const email = req.body.email;
-    const user = await User.findOne({}).byEmail(email);
-    const financialProductGuides = await FinancialProductGuide.find({}, '-_id');
-    if (email) {
-        logger.info('building advisory')
-        try {
-
-            const params = {
-                MessageBody: JSON.stringify({
-                    user,
-                    productsToProcess: financialProductGuides
-                }), // message should be a String
-                QueueUrl: queueUrl,
-                MessageGroupId: 'tally-recommendation',
-                MessageDeduplicationId: `${email}chatgptadvisory`
-            };
-            const response = await sqs.sendMessage(params).promise();
-            logger.info(`Message ${response.MessageId} enqueued successfully.`);
-            /*  user.profile.isNewAdvisoryNeeded = false
-              await user.save();
-              logger.info('updated advisory flag') */
-            res.status(200);
-            res.json({
-                ads: [
-                    {
-                        business_name: "GoDaddy",
-                        business_website: "https://godaddy.com/",
-                    },
-                    {
-                        business_name: "Meta",
-                        business_website: "https://meta.com/",
-                    }
-                ],
-                messages: responseTypes.SUCCESS.ADS
-            })
-        } catch (error) {
-            logger.info(error)
-            res.status(error.response?.status || 500).json({
-                message: error.response?.statusText || 'Internal Server Error'
-            });
-        }
-    } else {
-        res.status(400);
-        res.json({
-            message: "Missing required values"
-        })
-    }
-};
-
-exports.getLatestRecommendation = async (req, res) => {
-    const email = req.headers['email'];
-
-    if (email) {
-        try {
-            let recommendation = await FinancialRecommendation.findOne({
-                email: email
-            })
-                .sort({timestamp: -1});
-            res.status(200)
-            res.send({
-                recommendation
-            })
-
-        } catch (error) {
-            logger.info(error)
-            res.status(error.response?.status || 500).json({
-                message: error.response?.statusText || 'Internal Server Error'
-            });
-        }
-    } else {
-        res.status(400);
-        res.json({
-            message: "Missing required values"
-        })
-    }
-};
-
-exports.appList = async (req, res) => {
+exports.appListV2 = async (req, res) => {
     const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
-    const likeCount = await FinancialProductGuide.countDocuments({"group.likes": {$gt: 0}});
-    const signupCount = await FinancialProductGuide.countDocuments({"group.signups": {$gt: 0}});
-    const saveCount = await FinancialProductGuide.countDocuments({"group.saves": {$gt: 0}});
+    const likeCount = await FinancialProductGuideV2.countDocuments({"group.likes": {$gt: 0}});
+    const signupCount = await FinancialProductGuideV2.countDocuments({"group.signups": {$gt: 0}});
+    const saveCount = await FinancialProductGuideV2.countDocuments({"group.saves": {$gt: 0}});
     const mostLikedPercentile = Math.ceil(likeCount * 0.20);  // Adjust this number to change the percentile
     const mostSignupsPercentile = Math.ceil(signupCount * 0.30);  // Adjust this number to change the percentile
     const mostSavesPercentile = Math.ceil(saveCount * 0.40);  // Adjust this number to change the percentile
@@ -131,11 +50,13 @@ exports.appList = async (req, res) => {
                     appsHistory.push(product);
                 });
             });
-            result.yourRecommendations.count = appsHistory.length
-            result.yourRecommendations.appsHistory = appsHistory
+            let updatedAppsHistory = await updateAboutInAppsHistory(appsHistory)
+            result.yourRecommendations.count = updatedAppsHistory.length
+            result.yourRecommendations.appsHistory = updatedAppsHistory
+
 
 //group likes
-            const financialProductGuideLikesList = await FinancialProductGuide
+            const financialProductGuideV2LikesList = await FinancialProductGuideV2
                 .find({"group.likes": {$gt: 0}})
                 .select('-group.saves -group.signups -self.saves -self.signups')
                 .sort({"group.likes": -1})
@@ -143,11 +64,11 @@ exports.appList = async (req, res) => {
                 .exec();
 
 
-            result.mostLiked.count = financialProductGuideLikesList.length
-            result.mostLiked.likesList = await buildFinancialGuideWithMetaData(financialProductGuideLikesList, key)
+            result.mostLiked.count = financialProductGuideV2LikesList.length
+            result.mostLiked.likesList = await buildFinancialGuideWithMetaDataV2(financialProductGuideV2LikesList, key)
 
 //group signups
-            const financialProductGuideSignupsList = await FinancialProductGuide
+            const financialProductGuideV2SignupsList = await FinancialProductGuideV2
                 .find({"group.signups": {$gt: 0}})
                 .select('-group.saves -group.likes -self.saves -self.signups')
                 .sort({"group.signups": -1})
@@ -155,11 +76,11 @@ exports.appList = async (req, res) => {
                 .exec();
 
 
-            result.mostSignups.count = financialProductGuideSignupsList.length
-            result.mostSignups.signupsList = await buildFinancialGuideWithMetaData(financialProductGuideSignupsList, key)
+            result.mostSignups.count = financialProductGuideV2SignupsList.length
+            result.mostSignups.signupsList = await buildFinancialGuideWithMetaDataV2(financialProductGuideV2SignupsList, key)
 
             //group saves
-            const financialProductGuideSavesList = await FinancialProductGuide
+            const financialProductGuideV2SavesList = await FinancialProductGuideV2
                 .find({"group.saves": {$gt: 0}})
                 .select('-group.signups -group.likes -self.saves -self.signups')
                 .sort({"group.saves": -1})
@@ -167,19 +88,22 @@ exports.appList = async (req, res) => {
                 .exec();
 
 
-            result.mostSaves.count = financialProductGuideSavesList.length
-            result.mostSaves.savesList = await buildFinancialGuideWithMetaData(financialProductGuideSavesList, key)
+            result.mostSaves.count = financialProductGuideV2SavesList.length
+            result.mostSaves.savesList = await buildFinancialGuideWithMetaDataV2(financialProductGuideV2SavesList, key)
 
             //self save
             let user =  await User.findOne({}).byEmail(key)
             const selfSaveList = user.appsHistory.filter(item => item.type === 'save');
-            result.history.saves.count = selfSaveList.length
-            result.history.saves.selfSavesList = selfSaveList
+
+            let enrichedSelfSaveList = await enrichUsersAppsHistory(selfSaveList)
+            result.history.saves.count = enrichedSelfSaveList.length
+            result.history.saves.selfSavesList = enrichedSelfSaveList
 
             //self signups
             const signupList = user.appsHistory.filter(item => item.type === 'signup');
-            result.history.signups.count = signupList.length
-            result.history.signups.selfSignupList = signupList
+            let enrichedSignupList = await enrichUsersAppsHistory(signupList)
+            result.history.signups.count = enrichedSignupList.length
+            result.history.signups.selfSignupList = enrichedSignupList
 
 
             res.status(200)
@@ -202,85 +126,10 @@ exports.appList = async (req, res) => {
     }
 };
 
-/**
- * Updated from FinancialProductGuide to FinancialProductGuideV2
- * @param req
- * @param res
- * @returns {Promise<void>}
- */
-exports.trackUserInteractions = async (req, res) => {
-    const key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
-    const {group_nomination_business_name, action, actionGroup, activity} = req.body;
-    const allowedKeys = [
-        'likes',
-        'saves',
-        'signups'
-    ];
-    const allowedGroups = [
-        'group',
-        'self'
-    ];
-    if (group_nomination_business_name && action && actionGroup && allowedKeys.includes(action) && allowedGroups.includes(actionGroup)) {
-        logger.info('has required information')
-
-        try {
-            const financialProductV2 = await FinancialProductGuideV2.findOne({"business_name": group_nomination_business_name});
-            if (!financialProductV2) {
-                res.status(404).json({
-                    message: "Missing required values"
-                });
-            } else { // increment the corresponding attribute
-                financialProductV2[actionGroup][action] += 1;
-                financialProductV2['group'][action] += 1;
-                logger.info('updating action')
-                await financialProductV2.save();
-
-                if (actionGroup === 'self'){
-                    const user = await User.findOne({}).byEmail(key);
-                    if (user) {
-                        // Check if activity with the same type and app.business_name already exists in user.appsHistory
-                        const existingActivity = user.appsHistory.find(histActivity =>
-                            histActivity.type === activity.type &&
-                            histActivity.app.business_name === activity.app.business_name
-                        );
-
-                        if (!existingActivity) {
-                            if (user.appsHistory) {
-                                user.appsHistory.push(activity);
-                            } else {
-                                user.appsHistory = [activity];
-                            }
-                            await user.save()
-                            logger.info('updating user profile with their latest app activity')
-                        } else {
-                            logger.info('activity already exists, not saving');
-                        }
-                    }
-                }
-                logger.info('action logged successfully')
-                res.status(200).json({
-                    message: "success"
-                })
-            }
-
-        } catch (error) {
-            logger.error(error)
-            res.status(500).json({
-                message: "something went wrong"
-            });
-        }
-    } else {
-        res.status(400).json({
-            message: "Missing required values or action must be one of likes | saves | signups and actionGroup must be one of group | self"
-        })
-    }
-}
-
-
-const buildFinancialGuideWithMetaData = async (financialProductGuides, email) => {
+const buildFinancialGuideWithMetaDataV2 = async (financialProductGuidesV2, email) => {
     let guidesWithMeta = [];
     try {
-        guidesWithMeta = await Promise.all(financialProductGuides.map(async (guide) => {
+        guidesWithMeta = await Promise.all(financialProductGuidesV2.map(async (guide) => {
             let meta = await ProductGuidesMeta.findOne({
                 business_name: {$regex: new RegExp(`^${guide.business_name}$`, 'i')},
             })
@@ -301,6 +150,7 @@ const buildFinancialGuideWithMetaData = async (financialProductGuides, email) =>
             return {
                 business_name: guideWithMeta.business_name,
                 business_website: guideWithMeta.business_website,
+                business_about: guideWithMeta.about,
                 business_product_offerings: guideWithMeta.business_product_offerings,
                 inbound_sign_in_url: guideWithMeta.inbound_sign_in_url,
                 business_keywords: guideWithMeta.business_keywords,
@@ -411,3 +261,55 @@ const returnRandomKeywords = async (financialAdvisoryKeywords, number)=>{
 
     return result;
 }
+
+const updateAboutInAppsHistory = async (appsHistory) =>{
+    // Create a new array to store the updated objects
+    const updatedAppsHistory = [];
+
+    for (let i = 0; i < appsHistory.length; i++) {
+        const businessName = appsHistory[i].business_name;
+
+        // Find the corresponding document in FinancialProductGuideV2 based on business_name
+        const financialProduct = await FinancialProductGuideV2.findOne({ business_name: businessName });
+
+        // If a corresponding document is found, update the about field
+        if (financialProduct) {
+            appsHistory[i].about = financialProduct.business_about;
+            appsHistory[i].logo = financialProduct.logo;
+        }
+
+        // Add the updated object to the new array
+        updatedAppsHistory.push(appsHistory[i]);
+    }
+
+    // Return the updated array
+    return updatedAppsHistory;
+}
+
+const enrichUsersAppsHistory = async (appsHistory)=>{
+    // Create a new array to store the updated objects
+    const updatedAppsHistory = [];
+
+    // Iterate over each app in appsHistory
+    for (let i = 0; i < appsHistory.length; i++) {
+        const businessName = appsHistory[i].app.business_name;
+
+        // Find the corresponding document in FinancialProductGuideV2 based on business_name
+        const financialProduct = await FinancialProductGuideV2.findOne({ business_name: businessName });
+
+        // If a corresponding document is found, update the about and logo fields
+        if (financialProduct) {
+            appsHistory[i].app.about = financialProduct.business_about;
+            appsHistory[i].app.logo = financialProduct.logo;
+        } else {
+            console.log(`No matching document found for business_name: ${businessName}`);
+        }
+
+        // Add the updated object to the new array
+        updatedAppsHistory.push(appsHistory[i]);
+    }
+
+    // Return the updated array
+    return updatedAppsHistory;
+}
+
